@@ -1,0 +1,714 @@
+// Shadow Fight Arena Tournament Platform — database schema.
+//
+// Money is stored in minor units (paise for INR) as Int to avoid floating
+// point rounding in financial calculations; UI layers format to rupees.
+//
+// Standings (group tables, bracket progression) are intentionally NOT
+// persisted as their own source of truth — they are recalculated from
+// Match + MatchResult rows so a corrected official result can never leave
+// stale standings behind.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Identity & access
+// ---------------------------------------------------------------------------
+
+enum UserRole {
+  PLAYER
+  TOURNAMENT_ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  username      String    @unique
+  passwordHash  String
+  role          UserRole  @default(PLAYER)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  playerProfile PlayerProfile?
+
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+
+  ownedTournaments   Tournament[]        @relation("TournamentOwner")
+  adminPermissions   AdminPermission[]
+  registrations      TournamentRegistration[]
+  reviewedPayments    Payment[]           @relation("PaymentReviewer")
+  reportedResults     MatchResult[]       @relation("ResultReporter")
+  openedDisputes       Dispute[]           @relation("DisputeOpener")
+  resolvedDisputes     Dispute[]           @relation("DisputeResolver")
+  authoredAnnouncements Announcement[]
+  notifications         Notification[]
+  auditLogEntries        AuditLog[]
+  recordedPayouts        TournamentPrizePayout[] @relation("PayoutRecorder")
+
+  @@index([role])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum GamePlatform {
+  MOBILE
+  PC
+  OTHER
+}
+
+model PlayerProfile {
+  id               String        @id @default(cuid())
+  userId           String        @unique
+  sfaInGameName    String
+  sfaPlayerId      String
+  discordId        String?
+  profileImageUrl  String?
+  bio              String?
+  platform         GamePlatform?
+  rankOrLevel      String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fighterSelections PlayerFighterSelection[]
+  payouts            TournamentPrizePayout[]
+
+  // SFA player IDs are only guaranteed unique per platform (a player may have
+  // one PC id and one mobile id), so uniqueness is scoped to (platform, id)
+  // rather than enforced globally.
+  @@unique([platform, sfaPlayerId])
+  @@index([sfaInGameName])
+}
+
+// A Tournament Admin may own tournaments directly, or be granted access to
+// administer someone else's tournament via AdminPermission. Ownership and
+// delegated access are checked together wherever authorization happens.
+model AdminPermission {
+  id           String   @id @default(cuid())
+  tournamentId String
+  userId       String
+  canEditRules Boolean  @default(true)
+  canVerifyPayments Boolean @default(true)
+  canManageMatches  Boolean @default(true)
+  grantedAt    DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+}
+
+// ---------------------------------------------------------------------------
+// Fighter catalog
+// ---------------------------------------------------------------------------
+
+enum FighterRarity {
+  COMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+model Fighter {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  rarity        FighterRarity
+  isAvailable   Boolean       @default(true)
+  description   String?
+  portraitImageUrl String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  allowedInTournaments TournamentAllowedFighter[]
+  selections            PlayerFighterSelection[]
+}
+
+// Explicit per-tournament allow-list, layered on top of the tournament-wide
+// legendary toggle (Tournament.legendaryFightersAllowed). Absence of any row
+// for a tournament means "all fighters permitted by the rarity rule".
+model TournamentAllowedFighter {
+  id           String  @id @default(cuid())
+  tournamentId String
+  fighterId    String
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  fighter    Fighter    @relation(fields: [fighterId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, fighterId])
+}
+
+// One row per fighter slot a player declares for a tournament. 1v1 uses
+// slot 1 only; 3v3 uses slots 1-3. This always represents ONE human player's
+// chosen in-game fighters for that tournament — never other participants.
+model PlayerFighterSelection {
+  id              String   @id @default(cuid())
+  tournamentId    String
+  playerProfileId String
+  fighterId       String
+  slot            Int
+  declaredLevel   Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tournament    Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  playerProfile PlayerProfile @relation(fields: [playerProfileId], references: [id], onDelete: Cascade)
+  fighter       Fighter       @relation(fields: [fighterId], references: [id], onDelete: Restrict)
+
+  @@unique([tournamentId, playerProfileId, slot])
+}
+
+// ---------------------------------------------------------------------------
+// Tournament configuration
+// ---------------------------------------------------------------------------
+
+enum CompetitionMode {
+  ONE_V_ONE
+  THREE_V_THREE
+}
+
+enum TournamentPreset {
+  SOLO_FIXED
+  SOLO_FLEXIBLE
+  THREE_V_THREE_FIXED
+  THREE_V_THREE_FLEXIBLE
+}
+
+enum TournamentStructureType {
+  KNOCKOUT
+  GROUP
+  GROUP_THEN_KNOCKOUT
+}
+
+enum SeedingMethod {
+  MANUAL
+  RANDOM
+}
+
+enum RegistrationApproval {
+  AUTOMATIC
+  MANUAL
+}
+
+enum PrizeFundingType {
+  GUARANTEED
+  REGISTRATION_DEPENDENT
+}
+
+enum PrizeValueType {
+  FIXED
+  PERCENTAGE
+}
+
+// Status is derived at read-time from these fields + current time + capacity
+// (see lib/tournaments/status.ts) for every state EXCEPT the two an admin
+// explicitly sets: DRAFT and CANCELLED. The browser never sets status.
+enum TournamentStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+}
+
+model Tournament {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String
+  coverImageUrl String?
+  organizerName String
+  startAt     DateTime
+  endAt       DateTime?
+  timezone    String   @default("Asia/Kolkata")
+  contactInfo String?
+  instructions String?
+
+  mode   CompetitionMode
+  preset TournamentPreset
+
+  structureType       TournamentStructureType
+  seedingMethod        SeedingMethod @default(RANDOM)
+  hasThirdPlaceMatch    Boolean       @default(false)
+  groupSize             Int?
+  advancesPerGroup       Int?
+
+  // Rules & eligibility
+  legendaryFightersAllowed Boolean @default(false)
+  minAccountLevel           Int?
+  eligibilityNotes          String?
+  levelRuleEnabled           Boolean @default(false)
+  levelRuleDescription        String?
+  levelRuleRequiresVerification Boolean @default(false)
+  rosterMinLevel                Int?
+  rosterLevelAppliesToAllFighters Boolean @default(true)
+
+  // Registration window & capacity
+  registrationOpensAt   DateTime
+  registrationClosesAt  DateTime
+  maxParticipants         Int
+  minParticipants          Int?
+  waitlistEnabled           Boolean @default(false)
+  approvalMode               RegistrationApproval @default(AUTOMATIC)
+  paymentDeadlineMinutes       Int?    // minutes after registration before a pending paid slot expires
+  checkInEnabled                 Boolean @default(false)
+  checkInOpensBeforeMinutes       Int?
+
+  // Fees
+  isPaid     Boolean @default(false)
+  entryFeePaise Int?  @default(0)
+  currency     String @default("INR")
+
+  // Prize pool
+  prizePoolEnabled     Boolean          @default(false)
+  prizePoolAmountPaise Int?
+  prizeFundingType       PrizeFundingType?
+  prizeRevenuePercent      Int? // for REGISTRATION_DEPENDENT: % of collected verified entry fees allocated to the pool
+
+  status      TournamentStatus @default(DRAFT)
+  publishedAt DateTime?
+  cancelledAt DateTime?
+  cancellationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation("TournamentOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+
+  adminPermissions AdminPermission[]
+  paymentConfig     TournamentPaymentConfig?
+  prizeDistributions TournamentPrizeDistribution[]
+  prizePayouts        TournamentPrizePayout[]
+  allowedFighters       TournamentAllowedFighter[]
+  fighterSelections      PlayerFighterSelection[]
+  registrations            TournamentRegistration[]
+  stages                     TournamentStage[]
+  matches                      Match[]
+  announcements                  Announcement[]
+  disputes                        Dispute[]
+  auditLogEntries                   AuditLog[]
+
+  @@index([status])
+  @@index([startAt])
+}
+
+// A paid tournament cannot be published without this row fully populated
+// (enforced in app logic, see lib/tournaments/validation.ts).
+//
+// There is no in-app screenshot upload: players post payment proof directly
+// in the organizer's Discord using `screenshotDiscordUrl`, and submit the
+// transaction/UTR reference here for the admin to cross-check during
+// verification. This avoids needing any object-storage subsystem.
+model TournamentPaymentConfig {
+  id                   String    @id @default(cuid())
+  tournamentId         String    @unique
+  upiId                String
+  payeeName            String
+  qrCodeImageUrl       String
+  instructions         String?
+  submissionDeadlineAt DateTime?
+  transactionRefRequired Boolean @default(true)
+  screenshotDiscordUrl    String?
+  refundPolicy             String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+}
+
+model TournamentPrizeDistribution {
+  id           String         @id @default(cuid())
+  tournamentId String
+  position     Int
+  label        String
+  valueType    PrizeValueType
+  value        Int            // paise if FIXED, basis points *of 10000* if PERCENTAGE (e.g. 6000 = 60%)
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, position])
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+}
+
+model TournamentPrizePayout {
+  id              String       @id @default(cuid())
+  tournamentId    String
+  playerProfileId String
+  position        Int
+  amountPaise     Int
+  status          PayoutStatus @default(PENDING)
+  paidAt          DateTime?
+  reference       String?
+  recordedById    String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  tournament    Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  playerProfile PlayerProfile @relation(fields: [playerProfileId], references: [id], onDelete: Restrict)
+  recordedBy    User?         @relation("PayoutRecorder", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@unique([tournamentId, playerProfileId, position])
+}
+
+// ---------------------------------------------------------------------------
+// Registration & payments
+// ---------------------------------------------------------------------------
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
+  EXPIRED
+  CANCELLED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  NOT_REQUIRED
+  PENDING
+  PROOF_SUBMITTED
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+  REFUND_PENDING
+  REFUNDED
+  CANCELLED
+}
+
+// Registration status and payment status are deliberately separate fields:
+// a registration can be APPROVED while payment is still PENDING_VERIFICATION
+// under a manual-approval tournament, or PENDING while payment is VERIFIED
+// under a manual-approval tournament that still needs admin sign-off.
+model TournamentRegistration {
+  id              String             @id @default(cuid())
+  tournamentId    String
+  playerId        String
+  status          RegistrationStatus @default(PENDING)
+  paymentStatus   PaymentStatus      @default(NOT_REQUIRED)
+  seed            Int?
+  waitlistPosition Int?
+  checkedInAt     DateTime?
+  registeredAt    DateTime           @default(now())
+  approvedAt      DateTime?
+  approvedById    String?
+  rejectionReason String?
+  withdrawnAt     DateTime?
+  paymentExpiresAt DateTime?
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  player     User       @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  payment    Payment?
+  matchParticipations MatchParticipant[]
+  groupMemberships      GroupMembership[]
+
+  @@unique([tournamentId, playerId])
+  @@index([tournamentId, status])
+  @@index([paymentStatus, paymentExpiresAt])
+}
+
+enum PaymentReviewStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+}
+
+model Payment {
+  id              String               @id @default(cuid())
+  registrationId  String               @unique
+  amountPaise     Int
+  currency        String               @default("INR")
+  transactionRef  String?
+  status          PaymentReviewStatus  @default(PENDING_VERIFICATION)
+  isFlagged       Boolean              @default(false)
+  flagReason      String?
+  submittedAt     DateTime             @default(now())
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+
+  registration TournamentRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  reviewedBy   User?                  @relation("PaymentReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Tournament structure: stages, groups, matches
+// ---------------------------------------------------------------------------
+
+model TournamentStage {
+  id           String                  @id @default(cuid())
+  tournamentId String
+  type         TournamentStructureType
+  order        Int
+  name         String
+
+  tournament Tournament      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  groups      TournamentGroup[]
+  matches      Match[]
+
+  @@unique([tournamentId, order])
+}
+
+model TournamentGroup {
+  id      String @id @default(cuid())
+  stageId String
+  name    String
+
+  stage   TournamentStage   @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  members GroupMembership[]
+  matches  Match[]
+}
+
+model GroupMembership {
+  id             String @id @default(cuid())
+  groupId        String
+  registrationId String
+
+  group        TournamentGroup        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  registration TournamentRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, registrationId])
+}
+
+enum MatchStatus {
+  PENDING
+  SCHEDULED
+  IN_PROGRESS
+  RESULT_SUBMITTED
+  UNDER_DISPUTE
+  COMPLETED
+  FORFEITED
+  CANCELLED
+}
+
+model Match {
+  id            String      @id @default(cuid())
+  tournamentId  String
+  stageId       String
+  groupId       String?
+  round         Int
+  matchNumber   Int
+  isThirdPlace  Boolean     @default(false)
+  scheduledAt   DateTime?
+  status        MatchStatus @default(PENDING)
+  winnerRegistrationId String?
+  // Links this match's winner slot into the next round's participant slot,
+  // enabling automatic bracket advancement without a separate "bracket" table.
+  advancesToMatchId String?
+  advancesToSlot    Int?
+  adminNotes    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  tournament Tournament      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stage      TournamentStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  group      TournamentGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  participants MatchParticipant[]
+  results       MatchResult[]
+  disputes       Dispute[]
+
+  @@unique([tournamentId, round, matchNumber])
+  @@index([stageId])
+  @@index([status])
+}
+
+enum MatchSlot {
+  A
+  B
+}
+
+model MatchParticipant {
+  id             String    @id @default(cuid())
+  matchId        String
+  registrationId String
+  slot           MatchSlot
+  seed           Int?
+
+  match        Match                  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  registration TournamentRegistration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, slot])
+  @@unique([matchId, registrationId])
+}
+
+enum ResultOutcome {
+  A_WIN
+  B_WIN
+  FORFEIT_A
+  FORFEIT_B
+}
+
+// Every submission (player-reported or admin-recorded) is stored as its own
+// row so conflicting reports are visible; only the row with isOfficial=true
+// drives bracket advancement and standings.
+model MatchResult {
+  id              String        @id @default(cuid())
+  matchId         String
+  reportedById    String
+  scoreA          Int?
+  scoreB          Int?
+  outcome         ResultOutcome
+  isOfficial      Boolean       @default(false)
+  finalizedById   String?
+  finalizedAt     DateTime?
+  note            String?
+  // Optional link to evidence hosted elsewhere (e.g. a Discord message with
+  // a replay clip or screenshot) — no in-app file upload/storage.
+  evidenceUrl     String?
+  createdAt       DateTime      @default(now())
+
+  match      Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  reportedBy User  @relation("ResultReporter", fields: [reportedById], references: [id], onDelete: Restrict)
+
+  @@index([matchId, isOfficial])
+}
+
+enum DisputeStatus {
+  OPEN
+  RESOLVED
+  DISMISSED
+}
+
+model Dispute {
+  id           String        @id @default(cuid())
+  matchId      String
+  tournamentId String
+  openedById   String
+  reason       String
+  status       DisputeStatus @default(OPEN)
+  resolution   String?
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime      @default(now())
+
+  match      Match      @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  openedBy   User       @relation("DisputeOpener", fields: [openedById], references: [id], onDelete: Restrict)
+  resolvedBy User?      @relation("DisputeResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Communication & observability
+// ---------------------------------------------------------------------------
+
+model Announcement {
+  id           String    @id @default(cuid())
+  tournamentId String?   // null = platform-wide
+  title        String
+  body         String
+  authorId     String
+  createdAt    DateTime  @default(now())
+  publishedAt  DateTime?
+
+  tournament Tournament? @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  author     User        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+}
+
+enum NotificationType {
+  REGISTRATION
+  PAYMENT
+  MATCH
+  DISPUTE
+  ANNOUNCEMENT
+  ACCOUNT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+enum EmailDeliveryStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+// idempotencyKey guards against double-sends when an operation (e.g.
+// registration confirmation) is retried after a partial failure.
+model EmailDeliveryLog {
+  id               String              @id @default(cuid())
+  idempotencyKey   String              @unique
+  toEmail          String
+  template         String
+  subject          String
+  status           EmailDeliveryStatus @default(QUEUED)
+  providerMessageId String?
+  error            String?
+  relatedEntityType String?
+  relatedEntityId   String?
+  attempts          Int                 @default(0)
+  createdAt         DateTime            @default(now())
+  sentAt            DateTime?
+
+  @@index([status])
+  @@index([relatedEntityType, relatedEntityId])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String?
+  tournamentId String?
+  action       String
+  entityType   String
+  entityId     String
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  actor      User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  tournament Tournament? @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([tournamentId])
+}
