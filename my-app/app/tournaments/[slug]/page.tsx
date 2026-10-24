@@ -44,6 +44,9 @@ export default async function TournamentDetailPage({
         </div>
         <h1 className="text-3xl font-semibold">{tournament.name}</h1>
         <p className="mt-2 text-muted-foreground">{tournament.description}</p>
+        <Link href={`/tournaments/${tournament.slug}/bracket`} className="mt-2 inline-block text-sm underline">
+          View bracket &amp; standings
+        </Link>
       </div>
 
       <section className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">

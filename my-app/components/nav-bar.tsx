@@ -12,12 +12,17 @@ export async function NavBar() {
         Shadow Fight Arena
       </Link>
       <nav className="flex items-center gap-4 text-sm">
+        <Link href="/tournaments">Tournaments</Link>
         {user ? (
           <>
             <Link href="/dashboard">Dashboard</Link>
             {(user.role === "TOURNAMENT_ADMIN" || user.role === "SUPER_ADMIN") && (
-              <Link href="/admin">Admin</Link>
+              <>
+                <Link href="/admin">Admin</Link>
+                <Link href="/admin/tournaments">Manage Tournaments</Link>
+              </>
             )}
+            {user.role === "SUPER_ADMIN" && <Link href="/admin/fighters">Fighters</Link>}
             <form
               action={async () => {
                 "use server";

@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
     "create-super-admin": "tsx scripts/create-super-admin.ts"
   },
   "dependencies": {
@@ -52,6 +54,7 @@
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
+    "vite": "^8.3.5",
     "vitest": "^5.0.5"
   }
 }

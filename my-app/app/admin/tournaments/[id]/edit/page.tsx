@@ -33,12 +33,20 @@ export default async function EditTournamentPage({
     <div className="mx-auto w-full max-w-3xl py-16">
       <div className="mb-1 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">{tournament.name}</h1>
-        <Link
-          href={`/admin/tournaments/${tournament.id}/payments`}
-          className="text-sm text-muted-foreground underline"
-        >
-          Payment verification
-        </Link>
+        <div className="flex gap-4 text-sm text-muted-foreground">
+          <Link href={`/admin/tournaments/${tournament.id}/registrations`} className="underline">
+            Registrations
+          </Link>
+          <Link href={`/admin/tournaments/${tournament.id}/payments`} className="underline">
+            Payments
+          </Link>
+          <Link href={`/admin/tournaments/${tournament.id}/bracket`} className="underline">
+            Bracket
+          </Link>
+          <Link href={`/admin/tournaments/${tournament.id}/disputes`} className="underline">
+            Disputes
+          </Link>
+        </div>
       </div>
       <p className="mb-6 text-sm text-muted-foreground">
         Configure every aspect of this tournament, then publish when ready.
