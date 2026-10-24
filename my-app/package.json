@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "db:seed": "tsx prisma/seed.ts",
     "create-super-admin": "tsx scripts/create-super-admin.ts"
   },
   "dependencies": {
