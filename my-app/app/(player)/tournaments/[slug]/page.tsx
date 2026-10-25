@@ -7,6 +7,17 @@ import { formatPaiseAsInr } from "@/lib/money";
 import { UswBadge } from "@/components/usw/badge";
 import { UswPanel } from "@/components/usw/panel";
 import { RegisterButton } from "./register-button";
+import type { RegistrationStatus } from "@/lib/generated/prisma/client";
+
+const REGISTRATION_STATUS_BADGE_VARIANT: Record<RegistrationStatus, "default" | "secondary" | "outline"> = {
+  APPROVED: "default",
+  PENDING: "outline",
+  WAITLISTED: "outline",
+  REJECTED: "secondary",
+  EXPIRED: "secondary",
+  CANCELLED: "secondary",
+  WITHDRAWN: "secondary",
+};
 
 export default async function TournamentDetailPage({
   params,
@@ -35,6 +46,12 @@ export default async function TournamentDetailPage({
       where: { tournamentId_playerId: { tournamentId: tournament.id, playerId: user.id } },
     });
   }
+
+  const registrations = await prisma.tournamentRegistration.findMany({
+    where: { tournamentId: tournament.id },
+    include: { player: { select: { username: true, playerProfile: { select: { sfaInGameName: true } } } } },
+    orderBy: { registeredAt: "asc" },
+  });
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-8 py-2">
@@ -103,6 +120,37 @@ export default async function TournamentDetailPage({
             </li>
           )}
         </ul>
+      </section>
+
+      <section>
+        <SectionHeading>Registered players ({registrations.length})</SectionHeading>
+        {registrations.length === 0 ? (
+          <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+            No one has registered yet.
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {registrations.map((registration) => (
+              <li
+                key={registration.id}
+                className="flex items-center justify-between gap-3 border-b border-white/5 py-1.5 last:border-0"
+              >
+                <span className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface)]">
+                  {registration.player.username}
+                  {registration.player.playerProfile?.sfaInGameName && (
+                    <span className="text-[var(--usw-on-surface-variant)]">
+                      {" "}
+                      ({registration.player.playerProfile.sfaInGameName})
+                    </span>
+                  )}
+                </span>
+                <UswBadge variant={REGISTRATION_STATUS_BADGE_VARIANT[registration.status]}>
+                  {registration.status}
+                </UswBadge>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       {tournament.isPaid && tournament.paymentConfig && (

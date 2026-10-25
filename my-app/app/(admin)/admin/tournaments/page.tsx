@@ -75,9 +75,18 @@ export default async function AdminTournamentsPage() {
                     {tournament._count.registrations} / {tournament.maxParticipants}
                   </UswTableCell>
                   <UswTableCell className="text-right">
-                    <UswButton variant="ghost" size="sm" href={`/admin/tournaments/${tournament.id}/edit`}>
-                      Manage
-                    </UswButton>
+                    <div className="flex justify-end gap-2">
+                      <UswButton
+                        variant="ghost"
+                        size="sm"
+                        href={`/admin/tournaments/${tournament.id}/registrations`}
+                      >
+                        Registrations
+                      </UswButton>
+                      <UswButton variant="ghost" size="sm" href={`/admin/tournaments/${tournament.id}/edit`}>
+                        Manage
+                      </UswButton>
+                    </div>
                   </UswTableCell>
                 </UswTableRow>
               );
