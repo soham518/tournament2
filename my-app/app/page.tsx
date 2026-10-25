@@ -1,27 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Space_Grotesk, Space_Mono } from "next/font/google";
 import { Swords, Trophy, Users, ArrowRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth/guards";
 import { computeDisplayStatus } from "@/lib/tournaments/status";
 import { formatPaiseAsInr } from "@/lib/money";
-import { LandingHeader } from "./_landing/landing-header";
-import { LandingBottomNav } from "./_landing/landing-bottom-nav";
-import { Countdown } from "./_landing/countdown";
-import "./landing-theme.css";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-space-grotesk",
-});
-
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-space-mono",
-});
+import { spaceGrotesk, spaceMono } from "@/lib/fonts";
+import { UswHeader } from "@/components/usw/header";
+import { UswBottomNav } from "@/components/usw/bottom-nav";
+import { Countdown } from "@/components/usw/countdown";
+import "./usw-theme.css";
 
 async function getFeaturedTournament() {
   const candidates = await prisma.tournament.findMany({
@@ -61,7 +49,7 @@ export default async function Home() {
     <div
       className={`usw-theme ${spaceGrotesk.variable} ${spaceMono.variable} flex min-h-screen flex-col`}
     >
-      <LandingHeader isLoggedIn={isLoggedIn} />
+      <UswHeader />
 
       <main className="flex-1 pt-20 pb-24 sm:pb-8">
         {/* Hero */}
@@ -296,7 +284,7 @@ export default async function Home() {
         </aside>
       )}
 
-      <LandingBottomNav isLoggedIn={isLoggedIn} />
+      <UswBottomNav isLoggedIn={isLoggedIn} />
     </div>
   );
 }

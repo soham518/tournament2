@@ -1,0 +1,31 @@
+/* Scoped theme for every player-facing page (app/page.tsx and everything
+   under app/(player)/). Deliberately not touching the shadcn tokens in
+   globals.css, which the admin area still uses — this is a distinct
+   "cyber-samurai HUD" aesthetic sourced from a Stitch design, applied only
+   within .usw-theme. */
+.usw-theme {
+  --usw-surface: #11131d;
+  --usw-surface-bright: #373844;
+  --usw-surface-container-lowest: #0c0e18;
+  --usw-surface-container-low: #191b26;
+  --usw-surface-container: #1d1f2a;
+  --usw-surface-container-high: #282934;
+  --usw-surface-container-highest: #323440;
+  --usw-on-surface: #e1e1f0;
+  --usw-on-surface-variant: #d8c3ad;
+  --usw-outline: #a08e7a;
+  --usw-outline-variant: #534434;
+  --usw-primary: #ffc174;
+  --usw-primary-container: #f59e0b;
+  --usw-on-primary: #472a00;
+  --usw-on-primary-container: #613b00;
+  --usw-primary-fixed-dim: #ffb95f;
+  --usw-secondary-fixed-dim: #00daf3;
+  --usw-secondary-container: #00e3fd;
+  --usw-tertiary: #d5c3ff;
+  --usw-tertiary-container: #bda2ff;
+  --usw-error: #ffb4ab;
+
+  background-color: var(--usw-surface);
+  color: var(--usw-on-surface);
+}
