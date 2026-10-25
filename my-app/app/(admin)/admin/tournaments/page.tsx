@@ -83,6 +83,9 @@ export default async function AdminTournamentsPage() {
                       >
                         Registrations
                       </UswButton>
+                      <UswButton variant="ghost" size="sm" href={`/admin/tournaments/${tournament.id}/bracket`}>
+                        Bracket
+                      </UswButton>
                       <UswButton variant="ghost" size="sm" href={`/admin/tournaments/${tournament.id}/edit`}>
                         Manage
                       </UswButton>
