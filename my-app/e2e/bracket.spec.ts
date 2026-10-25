@@ -91,7 +91,12 @@ test("admin can generate a bracket and finalize a result, which advances the win
   await playerBContext.close();
 
   await adminPage.goto(`/admin/tournaments/${tournamentId}/bracket`);
-  await adminPage.getByRole("button", { name: "Generate random seeds & bracket" }).click();
+  await adminPage.getByRole("button", { name: "Generate seeds" }).click();
+  await adminPage.waitForTimeout(3000);
+  await adminPage.reload();
+  await expect(adminPage.getByText("Seed order")).toBeVisible();
+
+  await adminPage.getByRole("button", { name: "Generate bracket" }).click();
   await adminPage.waitForTimeout(3000);
   await adminPage.reload();
   await expect(adminPage.getByText("SCHEDULED")).toBeVisible();

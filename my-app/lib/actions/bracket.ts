@@ -16,6 +16,47 @@ function shuffle<T>(items: T[]): T[] {
   return copy;
 }
 
+export async function generateRandomSeedsAction(tournamentId: string): Promise<BracketActionResult> {
+  const actor = await requireTournamentAdmin(tournamentId);
+
+  const tournament = await prisma.tournament.findUniqueOrThrow({ where: { id: tournamentId } });
+  if (tournament.structureType !== "KNOCKOUT") {
+    return { success: false, error: "This tournament isn't configured as a knockout" };
+  }
+
+  const existingStage = await prisma.tournamentStage.findFirst({ where: { tournamentId } });
+  if (existingStage) {
+    return { success: false, error: "A bracket has already been generated for this tournament" };
+  }
+
+  const registrations = await prisma.tournamentRegistration.findMany({
+    where: { tournamentId, status: "APPROVED" },
+  });
+  if (registrations.length < 2) {
+    return { success: false, error: "At least 2 approved participants are required" };
+  }
+
+  const shuffled = shuffle(registrations);
+
+  await prisma.$transaction(async (tx) => {
+    for (let i = 0; i < shuffled.length; i++) {
+      await tx.tournamentRegistration.update({ where: { id: shuffled[i].id }, data: { seed: i + 1 } });
+    }
+    await tx.auditLog.create({
+      data: {
+        actorId: actor.id,
+        tournamentId,
+        action: "SEEDS_GENERATED",
+        entityType: "Tournament",
+        entityId: tournamentId,
+      },
+    });
+  });
+
+  revalidatePath(`/admin/tournaments/${tournamentId}/bracket`);
+  return { success: true };
+}
+
 export async function generateKnockoutStageAction(tournamentId: string): Promise<BracketActionResult> {
   const actor = await requireTournamentAdmin(tournamentId);
 
@@ -36,11 +77,11 @@ export async function generateKnockoutStageAction(tournamentId: string): Promise
   if (registrations.length < 2) {
     return { success: false, error: "At least 2 approved participants are required" };
   }
+  if (registrations.some((r) => r.seed === null)) {
+    return { success: false, error: "Generate seeds before generating the bracket" };
+  }
 
-  const orderedIds =
-    tournament.seedingMethod === "MANUAL" && registrations.every((r) => r.seed !== null)
-      ? registrations.map((r) => r.id)
-      : shuffle(registrations.map((r) => r.id));
+  const orderedIds = registrations.map((r) => r.id);
 
   const bracketMatches = generateKnockoutBracket(orderedIds, tournament.hasThirdPlaceMatch);
 

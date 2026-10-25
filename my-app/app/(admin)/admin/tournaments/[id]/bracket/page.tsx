@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { computeGroupStandings } from "@/lib/tournaments/standings";
 import { UswPanel } from "@/components/usw/panel";
 import { UswBracketTree, type BracketTreeMatch } from "@/components/usw/bracket-tree";
-import { GenerateBracketButton, GenerateGroupStageButton } from "./generate-buttons";
+import { GenerateSeedsButton, GenerateBracketButton, GenerateGroupStageButton } from "./generate-buttons";
 import { ResultDialog } from "./result-dialog";
 
 export default async function AdminBracketPage({
@@ -36,6 +36,15 @@ export default async function AdminBracketPage({
   if (!tournament) notFound();
 
   const hasStage = tournament.stages.length > 0;
+
+  const seededRegistrations =
+    !hasStage && tournament.structureType === "KNOCKOUT"
+      ? await prisma.tournamentRegistration.findMany({
+          where: { tournamentId: id, status: "APPROVED", seed: { not: null } },
+          include: { player: { select: { username: true } } },
+          orderBy: { seed: "asc" },
+        })
+      : [];
   const participantName = (registrationId: string | null, matches: typeof tournament.stages[0]["matches"]) => {
     if (!registrationId) return "TBD";
     for (const m of matches) {
@@ -55,10 +64,34 @@ export default async function AdminBracketPage({
         <UswPanel className="space-y-4">
           <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
             No bracket or group stage has been generated yet. Only approved registrations are
-            included. Generating a knockout bracket randomly seeds all approved players into the
-            bracket tree below — this can&apos;t be undone or regenerated once created.
+            included.
           </p>
-          {tournament.structureType === "KNOCKOUT" && <GenerateBracketButton tournamentId={id} />}
+          {tournament.structureType === "KNOCKOUT" && (
+            <>
+              <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+                First generate random seeds, then generate the bracket from those seeds. Neither
+                step can be undone or redone once the bracket is created.
+              </p>
+              <div className="flex gap-2">
+                <GenerateSeedsButton tournamentId={id} />
+                <GenerateBracketButton tournamentId={id} />
+              </div>
+              {seededRegistrations.length > 0 && (
+                <div>
+                  <h3 className="font-[family-name:var(--font-space-grotesk)] mb-2 text-sm font-bold uppercase text-[var(--usw-on-surface)]">
+                    Seed order
+                  </h3>
+                  <ol className="font-[family-name:var(--font-space-mono)] space-y-1 text-sm text-[var(--usw-on-surface)]">
+                    {seededRegistrations.map((r) => (
+                      <li key={r.id}>
+                        #{r.seed} — {r.player.username}
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+            </>
+          )}
           {(tournament.structureType === "GROUP" || tournament.structureType === "GROUP_THEN_KNOCKOUT") && (
             <GenerateGroupStageButton tournamentId={id} />
           )}
