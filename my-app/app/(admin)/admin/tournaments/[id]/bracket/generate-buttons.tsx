@@ -27,7 +27,7 @@ export function GenerateBracketButton({ tournamentId }: { tournamentId: string }
   return (
     <div className="space-y-2">
       <UswButton onClick={handleClick} disabled={isPending}>
-        {isPending ? "Generating…" : "Generate bracket"}
+        {isPending ? "Generating…" : "Generate random seeds & bracket"}
       </UswButton>
       <UswFieldError>{error}</UswFieldError>
     </div>

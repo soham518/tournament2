@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { computeGroupStandings } from "@/lib/tournaments/standings";
-import { UswBadge } from "@/components/usw/badge";
 import { UswPanel } from "@/components/usw/panel";
+import { UswBracketTree, type BracketTreeMatch } from "@/components/usw/bracket-tree";
 
 export default async function PublicBracketPage({
   params,
@@ -104,33 +104,28 @@ export default async function PublicBracketPage({
               );
             })}
 
-          {Array.from(new Set(stage.matches.map((m) => m.round))).map((round) => (
-            <div key={round}>
-              <h3 className="font-[family-name:var(--font-space-mono)] mb-2 text-sm text-[var(--usw-on-surface-variant)]">
-                Round {round}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {stage.matches
-                  .filter((m) => m.round === round)
-                  .map((match) => {
-                    const a = match.participants.find((p) => p.slot === "A");
-                    const b = match.participants.find((p) => p.slot === "B");
-                    return (
-                      <UswPanel key={match.id} className="p-3">
-                        <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface)]">
-                          {a?.registration.player.username ?? "TBD"} vs{" "}
-                          {b?.registration.player.username ?? "TBD"}
-                          {match.isThirdPlace && " (3rd place)"}
-                        </p>
-                        <UswBadge variant="secondary" className="mt-1">
-                          {match.status}
-                        </UswBadge>
-                      </UswPanel>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
+          {stage.type !== "GROUP" && (
+            <UswBracketTree
+              matches={stage.matches.map((match): BracketTreeMatch => {
+                const a = match.participants.find((p) => p.slot === "A");
+                const b = match.participants.find((p) => p.slot === "B");
+                return {
+                  id: match.id,
+                  round: match.round,
+                  matchNumber: match.matchNumber,
+                  isThirdPlace: match.isThirdPlace,
+                  status: match.status,
+                  participantA: a
+                    ? { registrationId: a.registrationId, name: a.registration.player.username }
+                    : null,
+                  participantB: b
+                    ? { registrationId: b.registrationId, name: b.registration.player.username }
+                    : null,
+                  winnerRegistrationId: match.winnerRegistrationId,
+                };
+              })}
+            />
+          )}
         </section>
       ))}
     </div>

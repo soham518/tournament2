@@ -181,8 +181,13 @@ These are explicit scope decisions or known gaps, not silently-faked functionali
 - **No manual seeding UI.** `Tournament.seedingMethod = MANUAL` is supported in the schema and
   bracket generator (it reads each registration's `seed` field), but there's no admin UI to
   actually assign seed numbers — only `RANDOM` seeding is reachable through the UI today.
-- **Bracket visualization is a simple grouped list**, not a graphical bracket tree. Functional
-  on desktop and mobile, not visually polished.
+- **Group-stage matches still render as a flat list**, not a graphical layout — expected, since
+  round-robin groups don't have a tree structure. Knockout brackets render as a real round-by-round
+  tree (`components/usw/bracket-tree.tsx`), shared read-only by players and with winner-recording
+  controls for admins, driven by `Match.advancesToMatchId`/`advancesToSlot`.
+- **Third-place match is not auto-populated.** If `hasThirdPlaceMatch` is enabled, the match row is
+  created but nothing wires the two losing semifinalists into its slots — there's no
+  "loser advancement" pointer in the schema, only winner-advancement.
 - **"Completed" tournament status** currently derives only from the configured end time, not
   from "all matches finished" — a tournament with an end date in the future will show as
   "In Progress" even if every match is done.

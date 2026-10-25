@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { requireTournamentAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { computeGroupStandings } from "@/lib/tournaments/standings";
-import { UswBadge } from "@/components/usw/badge";
 import { UswPanel } from "@/components/usw/panel";
+import { UswBracketTree, type BracketTreeMatch } from "@/components/usw/bracket-tree";
 import { GenerateBracketButton, GenerateGroupStageButton } from "./generate-buttons";
 import { ResultDialog } from "./result-dialog";
 
@@ -55,7 +55,8 @@ export default async function AdminBracketPage({
         <UswPanel className="space-y-4">
           <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
             No bracket or group stage has been generated yet. Only approved registrations are
-            included.
+            included. Generating a knockout bracket randomly seeds all approved players into the
+            bracket tree below — this can&apos;t be undone or regenerated once created.
           </p>
           {tournament.structureType === "KNOCKOUT" && <GenerateBracketButton tournamentId={id} />}
           {(tournament.structureType === "GROUP" || tournament.structureType === "GROUP_THEN_KNOCKOUT") && (
@@ -116,39 +117,37 @@ export default async function AdminBracketPage({
               );
             })}
 
-          {Array.from(new Set(stage.matches.map((m) => m.round))).map((round) => (
-            <div key={round}>
-              <h3 className="font-[family-name:var(--font-space-mono)] mb-2 text-sm text-[var(--usw-on-surface-variant)]">
-                Round {round}
-              </h3>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {stage.matches
-                  .filter((m) => m.round === round)
-                  .map((match) => {
-                    const a = match.participants.find((p) => p.slot === "A");
-                    const b = match.participants.find((p) => p.slot === "B");
-                    const nameA = a?.registration.player.username ?? "TBD";
-                    const nameB = b?.registration.player.username ?? "TBD";
-                    return (
-                      <UswPanel key={match.id} className="flex items-center justify-between p-3">
-                        <div className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface)]">
-                          <p>
-                            {nameA} vs {nameB}
-                            {match.isThirdPlace && " (3rd place)"}
-                          </p>
-                          <UswBadge variant="secondary" className="mt-1">
-                            {match.status}
-                          </UswBadge>
-                        </div>
-                        {match.status === "SCHEDULED" && a && b && (
-                          <ResultDialog matchId={match.id} nameA={nameA} nameB={nameB} />
-                        )}
-                      </UswPanel>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
+          {stage.type !== "GROUP" && (
+            <UswBracketTree
+              matches={stage.matches.map((match): BracketTreeMatch => {
+                const a = match.participants.find((p) => p.slot === "A");
+                const b = match.participants.find((p) => p.slot === "B");
+                return {
+                  id: match.id,
+                  round: match.round,
+                  matchNumber: match.matchNumber,
+                  isThirdPlace: match.isThirdPlace,
+                  status: match.status,
+                  participantA: a
+                    ? { registrationId: a.registrationId, name: a.registration.player.username }
+                    : null,
+                  participantB: b
+                    ? { registrationId: b.registrationId, name: b.registration.player.username }
+                    : null,
+                  winnerRegistrationId: match.winnerRegistrationId,
+                };
+              })}
+              renderActions={(match) =>
+                match.status === "SCHEDULED" && match.participantA && match.participantB ? (
+                  <ResultDialog
+                    matchId={match.id}
+                    nameA={match.participantA.name}
+                    nameB={match.participantB.name}
+                  />
+                ) : null
+              }
+            />
+          )}
         </section>
       ))}
     </div>
