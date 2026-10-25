@@ -52,7 +52,7 @@ export default async function Home() {
         <section className="relative w-full overflow-hidden bg-[var(--usw-surface-container-lowest)]">
           <div className="relative h-[460px] w-full sm:h-[560px]">
             <Image
-              src="/images/hero-desktop.png"
+              src="/images/hero-desktop-2.png"
               alt="Ultimate Shadow Warrior champions"
               fill
               priority
@@ -60,7 +60,7 @@ export default async function Home() {
               className="hidden object-cover object-top sm:block"
             />
             <Image
-              src="/images/hero-mobile.png"
+              src="/images/hero-mobile-2.png"
               alt="Ultimate Shadow Warrior champions"
               fill
               priority
