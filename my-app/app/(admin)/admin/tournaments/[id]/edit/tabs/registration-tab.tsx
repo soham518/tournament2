@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { updateRegistrationSettingsAction } from "@/lib/actions/tournament";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { UswButton } from "@/components/usw/button";
+import { UswInput } from "@/components/usw/input";
+import { UswLabel } from "@/components/usw/label";
+import { UswSwitch } from "@/components/usw/switch";
+import { UswSelect } from "@/components/usw/select";
+import { UswFieldError } from "@/components/usw/field-error";
+import { UswFieldSuccess } from "@/components/usw/field-success";
 
 type RegistrationFormValues = {
   registrationOpensAt: string;
@@ -68,16 +64,16 @@ export function RegistrationTab({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="registrationOpensAt">Registration opens</Label>
-          <Input
+          <UswLabel htmlFor="registrationOpensAt">Registration opens</UswLabel>
+          <UswInput
             id="registrationOpensAt"
             type="datetime-local"
             {...register("registrationOpensAt", { required: true })}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="registrationClosesAt">Registration closes</Label>
-          <Input
+          <UswLabel htmlFor="registrationClosesAt">Registration closes</UswLabel>
+          <UswInput
             id="registrationClosesAt"
             type="datetime-local"
             {...register("registrationClosesAt", { required: true })}
@@ -86,8 +82,8 @@ export function RegistrationTab({
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="maxParticipants">Max participants</Label>
-          <Input
+          <UswLabel htmlFor="maxParticipants">Max participants</UswLabel>
+          <UswInput
             id="maxParticipants"
             type="number"
             min={2}
@@ -95,8 +91,8 @@ export function RegistrationTab({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="minParticipants">Min participants (optional)</Label>
-          <Input
+          <UswLabel htmlFor="minParticipants">Min participants (optional)</UswLabel>
+          <UswInput
             id="minParticipants"
             type="number"
             min={1}
@@ -105,44 +101,33 @@ export function RegistrationTab({
         </div>
       </div>
       <div className="flex items-center justify-between">
-        <Label htmlFor="waitlistEnabled">Enable waitlist</Label>
+        <UswLabel htmlFor="waitlistEnabled">Enable waitlist</UswLabel>
         <Controller
           name="waitlistEnabled"
           control={control}
           render={({ field }) => (
-            <Switch id="waitlistEnabled" checked={field.value} onCheckedChange={field.onChange} />
+            <UswSwitch id="waitlistEnabled" checked={field.value} onCheckedChange={field.onChange} />
           )}
         />
       </div>
       {waitlistEnabled && (
-        <p className="text-xs text-muted-foreground">
+        <p className="font-[family-name:var(--font-space-mono)] text-xs text-[var(--usw-on-surface-variant)]">
           Players register past capacity onto a waitlist and are promoted automatically if a slot
           frees up.
         </p>
       )}
       <div className="space-y-2">
-        <Label htmlFor="approvalMode">Registration approval</Label>
-        <Controller
-          name="approvalMode"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="approvalMode" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="AUTOMATIC">Automatic</SelectItem>
-                <SelectItem value="MANUAL">Manual review required</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        />
+        <UswLabel htmlFor="approvalMode">Registration approval</UswLabel>
+        <UswSelect id="approvalMode" {...register("approvalMode")}>
+          <option value="AUTOMATIC">Automatic</option>
+          <option value="MANUAL">Manual review required</option>
+        </UswSelect>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="paymentDeadlineMinutes">
+        <UswLabel htmlFor="paymentDeadlineMinutes">
           Payment deadline after registering, in minutes (optional)
-        </Label>
-        <Input
+        </UswLabel>
+        <UswInput
           id="paymentDeadlineMinutes"
           type="number"
           min={1}
@@ -150,19 +135,19 @@ export function RegistrationTab({
         />
       </div>
       <div className="flex items-center justify-between">
-        <Label htmlFor="checkInEnabled">Require check-in</Label>
+        <UswLabel htmlFor="checkInEnabled">Require check-in</UswLabel>
         <Controller
           name="checkInEnabled"
           control={control}
           render={({ field }) => (
-            <Switch id="checkInEnabled" checked={field.value} onCheckedChange={field.onChange} />
+            <UswSwitch id="checkInEnabled" checked={field.value} onCheckedChange={field.onChange} />
           )}
         />
       </div>
       {checkInEnabled && (
         <div className="space-y-2">
-          <Label htmlFor="checkInOpensBeforeMinutes">Check-in opens this many minutes before start</Label>
-          <Input
+          <UswLabel htmlFor="checkInOpensBeforeMinutes">Check-in opens this many minutes before start</UswLabel>
+          <UswInput
             id="checkInOpensBeforeMinutes"
             type="number"
             min={1}
@@ -170,11 +155,11 @@ export function RegistrationTab({
           />
         </div>
       )}
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
-      {saved && <p className="text-sm text-emerald-600">Saved.</p>}
-      <Button type="submit" disabled={isSubmitting}>
+      <UswFieldError>{serverError}</UswFieldError>
+      <UswFieldSuccess>{saved && "Saved."}</UswFieldSuccess>
+      <UswButton type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Saving…" : "Save"}
-      </Button>
+      </UswButton>
     </form>
   );
 }

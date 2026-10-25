@@ -30,10 +30,12 @@ export default async function EditTournamentPage({
   const displayStatus = computeDisplayStatus(tournament, tournament._count.registrations);
 
   return (
-    <div className="mx-auto w-full max-w-3xl py-16">
+    <div className="mx-auto w-full max-w-3xl">
       <div className="mb-1 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">{tournament.name}</h1>
-        <div className="flex gap-4 text-sm text-muted-foreground">
+        <h1 className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold uppercase text-[var(--usw-on-surface)]">
+          {tournament.name}
+        </h1>
+        <div className="font-[family-name:var(--font-space-mono)] flex gap-4 text-sm text-[var(--usw-secondary-fixed-dim)]">
           <Link href={`/admin/tournaments/${tournament.id}/registrations`} className="underline">
             Registrations
           </Link>
@@ -48,7 +50,7 @@ export default async function EditTournamentPage({
           </Link>
         </div>
       </div>
-      <p className="mb-6 text-sm text-muted-foreground">
+      <p className="font-[family-name:var(--font-space-mono)] mb-6 text-sm text-[var(--usw-on-surface-variant)]">
         Configure every aspect of this tournament, then publish when ready.
       </p>
       <TournamentEditor

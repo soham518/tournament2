@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UswTabs as Tabs, UswTabsContent as TabsContent, UswTabsList as TabsList, UswTabsTrigger as TabsTrigger } from "@/components/usw/tabs";
 import { BasicsTab } from "./tabs/basics-tab";
 import { RulesTab } from "./tabs/rules-tab";
 import { RegistrationTab } from "./tabs/registration-tab";

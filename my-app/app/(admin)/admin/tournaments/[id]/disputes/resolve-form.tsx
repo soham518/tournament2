@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { resolveDisputeAction } from "@/lib/actions/match";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { UswButton } from "@/components/usw/button";
+import { UswTextarea } from "@/components/usw/textarea";
+import { UswFieldError } from "@/components/usw/field-error";
 
 export function ResolveDisputeForm({ disputeId }: { disputeId: string }) {
   const router = useRouter();
@@ -25,15 +26,15 @@ export function ResolveDisputeForm({ disputeId }: { disputeId: string }) {
 
   return (
     <div className="space-y-2">
-      <Textarea
+      <UswTextarea
         placeholder="Resolution notes"
         value={resolution}
         onChange={(e) => setResolution(e.target.value)}
       />
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button size="sm" onClick={handleSubmit} disabled={isPending}>
+      <UswFieldError>{error}</UswFieldError>
+      <UswButton size="sm" onClick={handleSubmit} disabled={isPending}>
         {isPending ? "Resolving…" : "Resolve"}
-      </Button>
+      </UswButton>
     </div>
   );
 }

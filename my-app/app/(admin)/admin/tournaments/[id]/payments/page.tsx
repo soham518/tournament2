@@ -2,15 +2,15 @@ import { notFound } from "next/navigation";
 import { requireTournamentAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { formatPaiseAsInr } from "@/lib/money";
-import { Badge } from "@/components/ui/badge";
+import { UswBadge } from "@/components/usw/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  UswTable,
+  UswTableBody,
+  UswTableCell,
+  UswTableHead,
+  UswTableHeader,
+  UswTableRow,
+} from "@/components/usw/table";
 import { PaymentActions } from "./payment-actions";
 
 export default async function PaymentVerificationPage({
@@ -35,52 +35,58 @@ export default async function PaymentVerificationPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl py-16">
-      <h1 className="mb-1 text-2xl font-semibold">Payment verification</h1>
-      <p className="mb-6 text-sm text-muted-foreground">{tournament.name}</p>
+    <div className="mx-auto w-full max-w-5xl">
+      <h1 className="font-[family-name:var(--font-space-grotesk)] mb-1 text-2xl font-bold uppercase text-[var(--usw-on-surface)]">
+        Payment verification
+      </h1>
+      <p className="font-[family-name:var(--font-space-mono)] mb-6 text-sm text-[var(--usw-on-surface-variant)]">
+        {tournament.name}
+      </p>
 
       {payments.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No payment submissions yet.</p>
+        <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+          No payment submissions yet.
+        </p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Player</TableHead>
-              <TableHead>In-game name</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Transaction ref</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Submitted</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <UswTable>
+          <UswTableHeader>
+            <UswTableRow>
+              <UswTableHead>Player</UswTableHead>
+              <UswTableHead>In-game name</UswTableHead>
+              <UswTableHead>Amount</UswTableHead>
+              <UswTableHead>Transaction ref</UswTableHead>
+              <UswTableHead>Status</UswTableHead>
+              <UswTableHead>Submitted</UswTableHead>
+              <UswTableHead>Actions</UswTableHead>
+            </UswTableRow>
+          </UswTableHeader>
+          <UswTableBody>
             {payments.map((payment) => (
-              <TableRow key={payment.id}>
-                <TableCell className="font-medium">{payment.registration.player.username}</TableCell>
-                <TableCell>{payment.registration.player.playerProfile?.sfaInGameName ?? "—"}</TableCell>
-                <TableCell>{formatPaiseAsInr(payment.amountPaise)}</TableCell>
-                <TableCell className="font-mono text-xs">{payment.transactionRef ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant={payment.status === "VERIFIED" ? "default" : "secondary"}>
+              <UswTableRow key={payment.id}>
+                <UswTableCell className="font-bold">{payment.registration.player.username}</UswTableCell>
+                <UswTableCell>{payment.registration.player.playerProfile?.sfaInGameName ?? "—"}</UswTableCell>
+                <UswTableCell>{formatPaiseAsInr(payment.amountPaise)}</UswTableCell>
+                <UswTableCell className="text-xs">{payment.transactionRef ?? "—"}</UswTableCell>
+                <UswTableCell>
+                  <UswBadge variant={payment.status === "VERIFIED" ? "default" : "secondary"}>
                     {payment.status}
                     {payment.isFlagged ? " · Flagged" : ""}
-                  </Badge>
-                </TableCell>
-                <TableCell>{payment.submittedAt.toLocaleString()}</TableCell>
-                <TableCell>
+                  </UswBadge>
+                </UswTableCell>
+                <UswTableCell>{payment.submittedAt.toLocaleString()}</UswTableCell>
+                <UswTableCell>
                   {payment.status === "PENDING_VERIFICATION" ? (
                     <PaymentActions paymentId={payment.id} />
                   ) : (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-[var(--usw-on-surface-variant)]">
                       {payment.status === "VERIFIED" ? "Verified" : "Rejected"}
                     </span>
                   )}
-                </TableCell>
-              </TableRow>
+                </UswTableCell>
+              </UswTableRow>
             ))}
-          </TableBody>
-        </Table>
+          </UswTableBody>
+        </UswTable>
       )}
     </div>
   );

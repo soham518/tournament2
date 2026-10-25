@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateKnockoutStageAction, generateGroupStageAction } from "@/lib/actions/bracket";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { UswButton } from "@/components/usw/button";
+import { UswInput } from "@/components/usw/input";
+import { UswLabel } from "@/components/usw/label";
+import { UswFieldError } from "@/components/usw/field-error";
 
 export function GenerateBracketButton({ tournamentId }: { tournamentId: string }) {
   const router = useRouter();
@@ -25,10 +26,10 @@ export function GenerateBracketButton({ tournamentId }: { tournamentId: string }
 
   return (
     <div className="space-y-2">
-      <Button onClick={handleClick} disabled={isPending}>
+      <UswButton onClick={handleClick} disabled={isPending}>
         {isPending ? "Generating…" : "Generate bracket"}
-      </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      </UswButton>
+      <UswFieldError>{error}</UswFieldError>
     </div>
   );
 }
@@ -53,8 +54,8 @@ export function GenerateGroupStageButton({ tournamentId }: { tournamentId: strin
   return (
     <div className="flex items-end gap-2">
       <div className="space-y-2">
-        <Label htmlFor="groupSize">Group size</Label>
-        <Input
+        <UswLabel htmlFor="groupSize">Group size</UswLabel>
+        <UswInput
           id="groupSize"
           type="number"
           min={2}
@@ -63,10 +64,10 @@ export function GenerateGroupStageButton({ tournamentId }: { tournamentId: strin
           className="w-24"
         />
       </div>
-      <Button onClick={handleClick} disabled={isPending}>
+      <UswButton onClick={handleClick} disabled={isPending}>
         {isPending ? "Generating…" : "Generate groups"}
-      </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      </UswButton>
+      <UswFieldError>{error}</UswFieldError>
     </div>
   );
 }

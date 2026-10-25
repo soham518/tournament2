@@ -3,23 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { recordOfficialResultAction } from "@/lib/actions/match";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { UswButton } from "@/components/usw/button";
+import { UswInput } from "@/components/usw/input";
+import { UswLabel } from "@/components/usw/label";
+import { UswSelect } from "@/components/usw/select";
+import { UswFieldError } from "@/components/usw/field-error";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  UswDialog,
+  UswDialogContent,
+  UswDialogHeader,
+  UswDialogTitle,
+  UswDialogTrigger,
+} from "@/components/usw/dialog";
 
 export function ResultDialog({
   matchId,
@@ -55,45 +50,44 @@ export function ResultDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button size="sm">Record result</Button>} />
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
+    <UswDialog open={open} onOpenChange={setOpen}>
+      <UswDialogTrigger render={<UswButton size="sm">Record result</UswButton>} />
+      <UswDialogContent>
+        <UswDialogHeader>
+          <UswDialogTitle>
             {nameA} vs {nameB}
-          </DialogTitle>
-        </DialogHeader>
+          </UswDialogTitle>
+        </UswDialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label>Outcome</Label>
-            <Select value={outcome} onValueChange={(v) => setOutcome(v as typeof outcome)}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="A_WIN">{nameA} wins</SelectItem>
-                <SelectItem value="B_WIN">{nameB} wins</SelectItem>
-                <SelectItem value="FORFEIT_A">{nameA} forfeits</SelectItem>
-                <SelectItem value="FORFEIT_B">{nameB} forfeits</SelectItem>
-              </SelectContent>
-            </Select>
+            <UswLabel htmlFor="outcome">Outcome</UswLabel>
+            <UswSelect
+              id="outcome"
+              value={outcome}
+              onChange={(e) => setOutcome(e.target.value as typeof outcome)}
+            >
+              <option value="A_WIN">{nameA} wins</option>
+              <option value="B_WIN">{nameB} wins</option>
+              <option value="FORFEIT_A">{nameA} forfeits</option>
+              <option value="FORFEIT_B">{nameB} forfeits</option>
+            </UswSelect>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="scoreA">{nameA} score (optional)</Label>
-              <Input id="scoreA" type="number" value={scoreA} onChange={(e) => setScoreA(e.target.value)} />
+              <UswLabel htmlFor="scoreA">{nameA} score (optional)</UswLabel>
+              <UswInput id="scoreA" type="number" value={scoreA} onChange={(e) => setScoreA(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="scoreB">{nameB} score (optional)</Label>
-              <Input id="scoreB" type="number" value={scoreB} onChange={(e) => setScoreB(e.target.value)} />
+              <UswLabel htmlFor="scoreB">{nameB} score (optional)</UswLabel>
+              <UswInput id="scoreB" type="number" value={scoreB} onChange={(e) => setScoreB(e.target.value)} />
             </div>
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button onClick={handleSubmit} disabled={isPending} className="w-full">
+          <UswFieldError>{error}</UswFieldError>
+          <UswButton onClick={handleSubmit} disabled={isPending} className="w-full">
             {isPending ? "Saving…" : "Finalize result"}
-          </Button>
+          </UswButton>
         </div>
-      </DialogContent>
-    </Dialog>
+      </UswDialogContent>
+    </UswDialog>
   );
 }

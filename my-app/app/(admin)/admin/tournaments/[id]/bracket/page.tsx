@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { requireTournamentAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { computeGroupStandings } from "@/lib/tournaments/standings";
-import { Badge } from "@/components/ui/badge";
+import { UswBadge } from "@/components/usw/badge";
+import { UswPanel } from "@/components/usw/panel";
 import { GenerateBracketButton, GenerateGroupStageButton } from "./generate-buttons";
 import { ResultDialog } from "./result-dialog";
 
@@ -45,12 +46,14 @@ export default async function AdminBracketPage({
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 py-16">
-      <h1 className="text-2xl font-semibold">{tournament.name} — Bracket</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-8">
+      <h1 className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold uppercase text-[var(--usw-on-surface)]">
+        {tournament.name} — Bracket
+      </h1>
 
       {!hasStage && (
-        <div className="space-y-4 rounded-md border p-4">
-          <p className="text-sm text-muted-foreground">
+        <UswPanel className="space-y-4">
+          <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
             No bracket or group stage has been generated yet. Only approved registrations are
             included.
           </p>
@@ -58,12 +61,14 @@ export default async function AdminBracketPage({
           {(tournament.structureType === "GROUP" || tournament.structureType === "GROUP_THEN_KNOCKOUT") && (
             <GenerateGroupStageButton tournamentId={id} />
           )}
-        </div>
+        </UswPanel>
       )}
 
       {tournament.stages.map((stage) => (
         <section key={stage.id} className="space-y-6">
-          <h2 className="text-lg font-medium">{stage.name}</h2>
+          <h2 className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold uppercase text-[var(--usw-on-surface)]">
+            {stage.name}
+          </h2>
 
           {stage.type === "GROUP" &&
             stage.groups.map((group) => {
@@ -81,11 +86,13 @@ export default async function AdminBracketPage({
                 }))
               );
               return (
-                <div key={group.id} className="rounded-md border p-4">
-                  <h3 className="mb-2 font-medium">{group.name}</h3>
-                  <table className="w-full text-sm">
+                <UswPanel key={group.id}>
+                  <h3 className="font-[family-name:var(--font-space-grotesk)] mb-2 font-bold uppercase text-[var(--usw-on-surface)]">
+                    {group.name}
+                  </h3>
+                  <table className="font-[family-name:var(--font-space-mono)] w-full text-sm">
                     <thead>
-                      <tr className="text-left text-muted-foreground">
+                      <tr className="text-left text-[var(--usw-on-surface-variant)]">
                         <th>Player</th>
                         <th>W</th>
                         <th>L</th>
@@ -93,7 +100,7 @@ export default async function AdminBracketPage({
                         <th>Pts</th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="text-[var(--usw-on-surface)]">
                       {standings.map((s) => (
                         <tr key={s.registrationId}>
                           <td>{participantName(s.registrationId, stage.matches)}</td>
@@ -105,13 +112,15 @@ export default async function AdminBracketPage({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </UswPanel>
               );
             })}
 
           {Array.from(new Set(stage.matches.map((m) => m.round))).map((round) => (
             <div key={round}>
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">Round {round}</h3>
+              <h3 className="font-[family-name:var(--font-space-mono)] mb-2 text-sm text-[var(--usw-on-surface-variant)]">
+                Round {round}
+              </h3>
               <div className="grid gap-2 sm:grid-cols-2">
                 {stage.matches
                   .filter((m) => m.round === round)
@@ -121,20 +130,20 @@ export default async function AdminBracketPage({
                     const nameA = a?.registration.player.username ?? "TBD";
                     const nameB = b?.registration.player.username ?? "TBD";
                     return (
-                      <div key={match.id} className="flex items-center justify-between rounded-md border p-3">
-                        <div className="text-sm">
+                      <UswPanel key={match.id} className="flex items-center justify-between p-3">
+                        <div className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface)]">
                           <p>
                             {nameA} vs {nameB}
                             {match.isThirdPlace && " (3rd place)"}
                           </p>
-                          <Badge variant="secondary" className="mt-1">
+                          <UswBadge variant="secondary" className="mt-1">
                             {match.status}
-                          </Badge>
+                          </UswBadge>
                         </div>
                         {match.status === "SCHEDULED" && a && b && (
                           <ResultDialog matchId={match.id} nameA={nameA} nameB={nameB} />
                         )}
-                      </div>
+                      </UswPanel>
                     );
                   })}
               </div>

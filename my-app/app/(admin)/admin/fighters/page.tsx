@@ -1,15 +1,15 @@
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { UswButton } from "@/components/usw/button";
+import { UswBadge } from "@/components/usw/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  UswTable,
+  UswTableBody,
+  UswTableCell,
+  UswTableHead,
+  UswTableHeader,
+  UswTableRow,
+} from "@/components/usw/table";
 import { FighterFormDialog } from "./fighter-form-dialog";
 import { AvailabilityToggle } from "./availability-toggle";
 
@@ -25,45 +25,52 @@ export default async function FightersPage() {
   const fighters = await prisma.fighter.findMany({ orderBy: [{ rarity: "desc" }, { name: "asc" }] });
 
   return (
-    <div className="mx-auto w-full max-w-4xl py-16">
+    <div className="mx-auto w-full max-w-4xl">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Fighter catalog</h1>
-          <p className="text-sm text-muted-foreground">
+          <span className="font-[family-name:var(--font-space-mono)] text-[11px] font-bold uppercase tracking-widest text-[var(--usw-secondary-fixed-dim)]">
+            [Roster Registry]
+          </span>
+          <h1 className="font-[family-name:var(--font-space-grotesk)] mt-1 text-2xl font-bold uppercase text-[var(--usw-on-surface)]">
+            Fighter catalog
+          </h1>
+          <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
             Manage the Shadow Fight Arena fighter roster available to tournament organizers.
           </p>
         </div>
-        <FighterFormDialog trigger={<Button>Add fighter</Button>} />
+        <FighterFormDialog trigger={<UswButton>Add fighter</UswButton>} />
       </div>
 
       {fighters.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No fighters yet. Add the first one above.</p>
+        <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+          No fighters yet. Add the first one above.
+        </p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Rarity</TableHead>
-              <TableHead>Available</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <UswTable>
+          <UswTableHeader>
+            <UswTableRow>
+              <UswTableHead>Name</UswTableHead>
+              <UswTableHead>Rarity</UswTableHead>
+              <UswTableHead>Available</UswTableHead>
+              <UswTableHead className="text-right">Actions</UswTableHead>
+            </UswTableRow>
+          </UswTableHeader>
+          <UswTableBody>
             {fighters.map((fighter) => (
-              <TableRow key={fighter.id}>
-                <TableCell className="font-medium">{fighter.name}</TableCell>
-                <TableCell>
-                  <Badge variant={RARITY_VARIANT[fighter.rarity]}>{fighter.rarity}</Badge>
-                </TableCell>
-                <TableCell>
+              <UswTableRow key={fighter.id}>
+                <UswTableCell className="font-bold">{fighter.name}</UswTableCell>
+                <UswTableCell>
+                  <UswBadge variant={RARITY_VARIANT[fighter.rarity]}>{fighter.rarity}</UswBadge>
+                </UswTableCell>
+                <UswTableCell>
                   <AvailabilityToggle id={fighter.id} isAvailable={fighter.isAvailable} />
-                </TableCell>
-                <TableCell className="text-right">
+                </UswTableCell>
+                <UswTableCell className="text-right">
                   <FighterFormDialog
                     trigger={
-                      <Button variant="ghost" size="sm">
+                      <UswButton variant="ghost" size="sm">
                         Edit
-                      </Button>
+                      </UswButton>
                     }
                     fighter={{
                       id: fighter.id,
@@ -74,11 +81,11 @@ export default async function FightersPage() {
                       portraitImageUrl: fighter.portraitImageUrl ?? "",
                     }}
                   />
-                </TableCell>
-              </TableRow>
+                </UswTableCell>
+              </UswTableRow>
             ))}
-          </TableBody>
-        </Table>
+          </UswTableBody>
+        </UswTable>
       )}
     </div>
   );

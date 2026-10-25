@@ -1,16 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { spaceGrotesk, spaceMono } from "@/lib/fonts";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import "./usw-theme.css";
 
 export const metadata: Metadata = {
   title: "Shadow Fight Arena Tournaments",
@@ -21,9 +12,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${spaceMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      {/* Font variables and theme tokens live on <html> (the one true
+          ancestor of everything, portals included) rather than a wrapper
+          div — Base UI's Dialog portals its content straight onto <body>,
+          outside any component-scoped wrapper, so anything scoped lower
+          than this is invisible to dialog content. See usw-theme.css. */}
+      <body className="usw-theme min-h-full flex flex-col">{children}</body>
     </html>
   );
 }

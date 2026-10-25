@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { updateRulesAction } from "@/lib/actions/tournament";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
+import { UswButton } from "@/components/usw/button";
+import { UswInput } from "@/components/usw/input";
+import { UswLabel } from "@/components/usw/label";
+import { UswTextarea } from "@/components/usw/textarea";
+import { UswSwitch } from "@/components/usw/switch";
+import { UswCheckbox } from "@/components/usw/checkbox";
+import { UswFieldError } from "@/components/usw/field-error";
+import { UswFieldSuccess } from "@/components/usw/field-success";
 
 type RulesFormValues = {
   legendaryFightersAllowed: boolean;
@@ -67,12 +69,12 @@ export function RulesTab({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label htmlFor="legendaryFightersAllowed">Legendary fighters allowed</Label>
+        <UswLabel htmlFor="legendaryFightersAllowed">Legendary fighters allowed</UswLabel>
         <Controller
           name="legendaryFightersAllowed"
           control={control}
           render={({ field }) => (
-            <Switch
+            <UswSwitch
               id="legendaryFightersAllowed"
               checked={field.value}
               onCheckedChange={field.onChange}
@@ -81,15 +83,15 @@ export function RulesTab({
         />
       </div>
       {!legendaryAllowed && (
-        <p className="text-xs text-muted-foreground">
+        <p className="font-[family-name:var(--font-space-mono)] text-xs text-[var(--usw-on-surface-variant)]">
           Legendary-rarity fighters will be excluded from selection below, regardless of the
           allow-list.
         </p>
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="minAccountLevel">Minimum account level (optional)</Label>
-        <Input
+        <UswLabel htmlFor="minAccountLevel">Minimum account level (optional)</UswLabel>
+        <UswInput
           id="minAccountLevel"
           type="number"
           min={1}
@@ -97,35 +99,35 @@ export function RulesTab({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="eligibilityNotes">Other eligibility requirements (optional)</Label>
-        <Textarea id="eligibilityNotes" rows={2} {...register("eligibilityNotes")} />
+        <UswLabel htmlFor="eligibilityNotes">Other eligibility requirements (optional)</UswLabel>
+        <UswTextarea id="eligibilityNotes" rows={2} {...register("eligibilityNotes")} />
       </div>
 
       <div className="flex items-center justify-between">
-        <Label htmlFor="levelRuleEnabled">
+        <UswLabel htmlFor="levelRuleEnabled">
           {mode === "ONE_V_ONE" ? "Require equal fighter level" : "Enforce roster level rule"}
-        </Label>
+        </UswLabel>
         <Controller
           name="levelRuleEnabled"
           control={control}
           render={({ field }) => (
-            <Switch id="levelRuleEnabled" checked={field.value} onCheckedChange={field.onChange} />
+            <UswSwitch id="levelRuleEnabled" checked={field.value} onCheckedChange={field.onChange} />
           )}
         />
       </div>
       {levelRuleEnabled && (
-        <div className="space-y-4 rounded-md border p-3">
+        <div className="space-y-4 bg-[var(--usw-surface-container-low)] p-3">
           <div className="space-y-2">
-            <Label htmlFor="levelRuleDescription">
+            <UswLabel htmlFor="levelRuleDescription">
               Describe the level-equivalence rule (shown in published rules)
-            </Label>
-            <Textarea id="levelRuleDescription" rows={2} {...register("levelRuleDescription")} />
+            </UswLabel>
+            <UswTextarea id="levelRuleDescription" rows={2} {...register("levelRuleDescription")} />
           </div>
           {mode === "THREE_V_THREE" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="rosterMinLevel">Minimum fighter/roster level</Label>
-                <Input
+                <UswLabel htmlFor="rosterMinLevel">Minimum fighter/roster level</UswLabel>
+                <UswInput
                   id="rosterMinLevel"
                   type="number"
                   min={1}
@@ -137,16 +139,16 @@ export function RulesTab({
                   name="rosterLevelAppliesToAllFighters"
                   control={control}
                   render={({ field }) => (
-                    <Checkbox
+                    <UswCheckbox
                       id="rosterLevelAppliesToAllFighters"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   )}
                 />
-                <Label htmlFor="rosterLevelAppliesToAllFighters">
+                <UswLabel htmlFor="rosterLevelAppliesToAllFighters">
                   Applies to every fighter in the roster, not just one
-                </Label>
+                </UswLabel>
               </div>
             </>
           )}
@@ -155,33 +157,36 @@ export function RulesTab({
               name="levelRuleRequiresVerification"
               control={control}
               render={({ field }) => (
-                <Checkbox
+                <UswCheckbox
                   id="levelRuleRequiresVerification"
                   checked={field.value}
                   onCheckedChange={field.onChange}
                 />
               )}
             />
-            <Label htmlFor="levelRuleRequiresVerification">Requires manual admin verification</Label>
+            <UswLabel htmlFor="levelRuleRequiresVerification">Requires manual admin verification</UswLabel>
           </div>
         </div>
       )}
 
       <div className="space-y-2">
-        <Label>Allowed fighters</Label>
-        <p className="text-xs text-muted-foreground">
+        <UswLabel>Allowed fighters</UswLabel>
+        <p className="font-[family-name:var(--font-space-mono)] text-xs text-[var(--usw-on-surface-variant)]">
           Leave all unchecked to allow every fighter permitted by the legendary-rarity rule above.
         </p>
         <Controller
           name="allowedFighterIds"
           control={control}
           render={({ field }) => (
-            <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto rounded-md border p-3">
+            <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto bg-[var(--usw-surface-container-low)] p-3">
               {fighters
                 .filter((f) => legendaryAllowed || f.rarity !== "LEGENDARY")
                 .map((fighter) => (
-                  <label key={fighter.id} className="flex items-center gap-2 text-sm">
-                    <Checkbox
+                  <label
+                    key={fighter.id}
+                    className="font-[family-name:var(--font-space-mono)] flex items-center gap-2 text-sm text-[var(--usw-on-surface)]"
+                  >
+                    <UswCheckbox
                       checked={field.value.includes(fighter.id)}
                       onCheckedChange={(checked) => {
                         field.onChange(
@@ -199,11 +204,11 @@ export function RulesTab({
         />
       </div>
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
-      {saved && <p className="text-sm text-emerald-600">Saved.</p>}
-      <Button type="submit" disabled={isSubmitting}>
+      <UswFieldError>{serverError}</UswFieldError>
+      <UswFieldSuccess>{saved && "Saved."}</UswFieldSuccess>
+      <UswButton type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Saving…" : "Save"}
-      </Button>
+      </UswButton>
     </form>
   );
 }

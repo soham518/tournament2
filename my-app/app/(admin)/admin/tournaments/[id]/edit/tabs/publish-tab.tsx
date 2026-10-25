@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { publishTournamentAction, cancelTournamentAction } from "@/lib/actions/tournament";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
+import { UswButton } from "@/components/usw/button";
+import { UswBadge } from "@/components/usw/badge";
+import { UswTextarea } from "@/components/usw/textarea";
+import { UswFieldError } from "@/components/usw/field-error";
 import { DISPLAY_STATUS_LABEL, type DisplayStatus } from "@/lib/tournaments/status";
 
 export function PublishTab({
@@ -54,43 +54,47 @@ export function PublishTab({
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <span className="text-sm text-muted-foreground">Current status:</span>
-        <Badge variant="secondary">{DISPLAY_STATUS_LABEL[displayStatus]}</Badge>
+        <span className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+          Current status:
+        </span>
+        <UswBadge variant="secondary">{DISPLAY_STATUS_LABEL[displayStatus]}</UswBadge>
       </div>
 
       <div className="flex gap-2">
-        <Button variant="outline" render={<Link href={`/tournaments/${slug}`} target="_blank">Preview public page</Link>} />
+        <UswButton variant="outline" href={`/tournaments/${slug}`} target="_blank">
+          Preview public page
+        </UswButton>
         {status === "DRAFT" && (
-          <Button onClick={handlePublish} disabled={isPending}>
+          <UswButton onClick={handlePublish} disabled={isPending}>
             {isPending ? "Publishing…" : "Publish"}
-          </Button>
+          </UswButton>
         )}
         {status === "PUBLISHED" && !showCancel && (
-          <Button variant="destructive" onClick={() => setShowCancel(true)}>
+          <UswButton variant="destructive" onClick={() => setShowCancel(true)}>
             Cancel tournament
-          </Button>
+          </UswButton>
         )}
       </div>
 
       {showCancel && (
-        <div className="space-y-2 rounded-md border p-3">
-          <Textarea
+        <div className="space-y-2 bg-[var(--usw-surface-container-low)] p-3">
+          <UswTextarea
             placeholder="Reason for cancellation (required, shown to affected players)"
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
           />
           <div className="flex gap-2">
-            <Button variant="destructive" size="sm" onClick={handleCancel} disabled={isPending}>
+            <UswButton variant="destructive" size="sm" onClick={handleCancel} disabled={isPending}>
               Confirm cancellation
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowCancel(false)}>
+            </UswButton>
+            <UswButton variant="ghost" size="sm" onClick={() => setShowCancel(false)}>
               Back
-            </Button>
+            </UswButton>
           </div>
         </div>
       )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      <UswFieldError>{error}</UswFieldError>
     </div>
   );
 }

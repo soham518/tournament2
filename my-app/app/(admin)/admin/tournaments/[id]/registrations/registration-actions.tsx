@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { approveRegistrationAction, rejectRegistrationAction } from "@/lib/actions/admin-registration";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { UswButton } from "@/components/usw/button";
+import { UswTextarea } from "@/components/usw/textarea";
+import { UswFieldError } from "@/components/usw/field-error";
 
 export function RegistrationActions({ registrationId }: { registrationId: string }) {
   const router = useRouter();
@@ -35,29 +36,29 @@ export function RegistrationActions({ registrationId }: { registrationId: string
   if (showReject) {
     return (
       <div className="space-y-2">
-        <Textarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" />
+        <UswTextarea value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Reason" />
         <div className="flex gap-2">
-          <Button size="sm" variant="destructive" onClick={reject} disabled={isPending}>
+          <UswButton size="sm" variant="destructive" onClick={reject} disabled={isPending}>
             Confirm
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setShowReject(false)}>
+          </UswButton>
+          <UswButton size="sm" variant="ghost" onClick={() => setShowReject(false)}>
             Cancel
-          </Button>
+          </UswButton>
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        <UswFieldError>{error}</UswFieldError>
       </div>
     );
   }
 
   return (
     <div className="flex gap-2">
-      <Button size="sm" onClick={approve} disabled={isPending}>
+      <UswButton size="sm" onClick={approve} disabled={isPending}>
         Approve
-      </Button>
-      <Button size="sm" variant="destructive" onClick={() => setShowReject(true)}>
+      </UswButton>
+      <UswButton size="sm" variant="destructive" onClick={() => setShowReject(true)}>
         Reject
-      </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      </UswButton>
+      <UswFieldError>{error}</UswFieldError>
     </div>
   );
 }

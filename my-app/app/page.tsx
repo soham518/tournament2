@@ -5,11 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth/guards";
 import { computeDisplayStatus } from "@/lib/tournaments/status";
 import { formatPaiseAsInr } from "@/lib/money";
-import { spaceGrotesk, spaceMono } from "@/lib/fonts";
 import { UswHeader } from "@/components/usw/header";
 import { UswBottomNav } from "@/components/usw/bottom-nav";
 import { Countdown } from "@/components/usw/countdown";
-import "./usw-theme.css";
 
 async function getFeaturedTournament() {
   const candidates = await prisma.tournament.findMany({
@@ -46,9 +44,7 @@ export default async function Home() {
     featured?.displayStatus === "REGISTRATION_OPEN" ? "Registration lock in" : "Tournament starts in";
 
   return (
-    <div
-      className={`usw-theme ${spaceGrotesk.variable} ${spaceMono.variable} flex min-h-screen flex-col`}
-    >
+    <div className="flex min-h-screen flex-col">
       <UswHeader />
 
       <main className="flex-1 pt-20 pb-24 sm:pb-8">

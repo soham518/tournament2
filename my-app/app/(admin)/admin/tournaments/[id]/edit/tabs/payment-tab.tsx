@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { updatePaymentConfigAction } from "@/lib/actions/tournament";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+import { UswButton } from "@/components/usw/button";
+import { UswInput } from "@/components/usw/input";
+import { UswLabel } from "@/components/usw/label";
+import { UswTextarea } from "@/components/usw/textarea";
+import { UswSwitch } from "@/components/usw/switch";
+import { UswFieldError } from "@/components/usw/field-error";
+import { UswFieldSuccess } from "@/components/usw/field-success";
 
 type PaymentFormValues = {
   isPaid: boolean;
@@ -74,49 +76,49 @@ export function PaymentTab({
   return (
     <form onSubmit={handleSubmit((values) => submit(values, false))} className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label htmlFor="isPaid">Paid registration</Label>
+        <UswLabel htmlFor="isPaid">Paid registration</UswLabel>
         <Controller
           name="isPaid"
           control={control}
           render={({ field }) => (
-            <Switch id="isPaid" checked={field.value} onCheckedChange={field.onChange} />
+            <UswSwitch id="isPaid" checked={field.value} onCheckedChange={field.onChange} />
           )}
         />
       </div>
 
       {isPaid && (
-        <div className="space-y-4 rounded-md border p-3">
+        <div className="space-y-4 bg-[var(--usw-surface-container-low)] p-3">
           <div className="space-y-2">
-            <Label htmlFor="entryFeeRupees">Entry fee (INR)</Label>
-            <Input id="entryFeeRupees" type="number" min={0} step="0.01" {...register("entryFeeRupees")} />
+            <UswLabel htmlFor="entryFeeRupees">Entry fee (INR)</UswLabel>
+            <UswInput id="entryFeeRupees" type="number" min={0} step="0.01" {...register("entryFeeRupees")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="upiId">UPI ID</Label>
-            <Input id="upiId" {...register("upiId", { required: isPaid })} />
+            <UswLabel htmlFor="upiId">UPI ID</UswLabel>
+            <UswInput id="upiId" {...register("upiId", { required: isPaid })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="payeeName">Payee name</Label>
-            <Input id="payeeName" {...register("payeeName", { required: isPaid })} />
+            <UswLabel htmlFor="payeeName">Payee name</UswLabel>
+            <UswInput id="payeeName" {...register("payeeName", { required: isPaid })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="qrCodeImageUrl">QR code image URL</Label>
-            <Input id="qrCodeImageUrl" {...register("qrCodeImageUrl", { required: isPaid })} />
+            <UswLabel htmlFor="qrCodeImageUrl">QR code image URL</UswLabel>
+            <UswInput id="qrCodeImageUrl" {...register("qrCodeImageUrl", { required: isPaid })} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="instructions">Payment instructions (optional)</Label>
-            <Textarea id="instructions" rows={2} {...register("instructions")} />
+            <UswLabel htmlFor="instructions">Payment instructions (optional)</UswLabel>
+            <UswTextarea id="instructions" rows={2} {...register("instructions")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="submissionDeadlineAt">Payment submission deadline (optional)</Label>
-            <Input id="submissionDeadlineAt" type="datetime-local" {...register("submissionDeadlineAt")} />
+            <UswLabel htmlFor="submissionDeadlineAt">Payment submission deadline (optional)</UswLabel>
+            <UswInput id="submissionDeadlineAt" type="datetime-local" {...register("submissionDeadlineAt")} />
           </div>
           <div className="flex items-center justify-between">
-            <Label htmlFor="transactionRefRequired">Require transaction reference / UTR</Label>
+            <UswLabel htmlFor="transactionRefRequired">Require transaction reference / UTR</UswLabel>
             <Controller
               name="transactionRefRequired"
               control={control}
               render={({ field }) => (
-                <Switch
+                <UswSwitch
                   id="transactionRefRequired"
                   checked={field.value}
                   onCheckedChange={field.onChange}
@@ -125,37 +127,37 @@ export function PaymentTab({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="screenshotDiscordUrl">
+            <UswLabel htmlFor="screenshotDiscordUrl">
               Discord link for players to share payment screenshots (optional)
-            </Label>
-            <Input id="screenshotDiscordUrl" {...register("screenshotDiscordUrl")} />
+            </UswLabel>
+            <UswInput id="screenshotDiscordUrl" {...register("screenshotDiscordUrl")} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="refundPolicy">Cancellation &amp; refund policy (optional)</Label>
-            <Textarea id="refundPolicy" rows={2} {...register("refundPolicy")} />
+            <UswLabel htmlFor="refundPolicy">Cancellation &amp; refund policy (optional)</UswLabel>
+            <UswTextarea id="refundPolicy" rows={2} {...register("refundPolicy")} />
           </div>
         </div>
       )}
 
       {serverError && (
         <div className="space-y-2">
-          <p className="text-sm text-destructive">{serverError}</p>
+          <UswFieldError>{serverError}</UswFieldError>
           {needsConfirm && (
-            <Button
+            <UswButton
               type="button"
               variant="outline"
               size="sm"
               onClick={handleSubmit((values) => submit(values, true))}
             >
               Confirm change anyway
-            </Button>
+            </UswButton>
           )}
         </div>
       )}
-      {saved && <p className="text-sm text-emerald-600">Saved.</p>}
-      <Button type="submit" disabled={isSubmitting}>
+      <UswFieldSuccess>{saved && "Saved."}</UswFieldSuccess>
+      <UswButton type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Saving…" : "Save"}
-      </Button>
+      </UswButton>
     </form>
   );
 }

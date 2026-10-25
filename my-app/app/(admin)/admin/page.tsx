@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireRole } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
 import { computeDisplayStatus } from "@/lib/tournaments/status";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { UswPanel } from "@/components/usw/panel";
 
 export default async function AdminHomePage() {
   const user = await requireRole(["TOURNAMENT_ADMIN", "SUPER_ADMIN"]);
@@ -57,40 +57,54 @@ export default async function AdminHomePage() {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-8 py-16">
+    <div className="mx-auto w-full max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold">Admin dashboard</h1>
-        <p className="text-sm text-muted-foreground">
+        <span className="font-[family-name:var(--font-space-mono)] text-[11px] font-bold uppercase tracking-widest text-[var(--usw-secondary-fixed-dim)]">
+          [Command Center]
+        </span>
+        <h1 className="font-[family-name:var(--font-space-grotesk)] mt-1 text-2xl font-bold uppercase text-[var(--usw-on-surface)]">
+          Admin dashboard
+        </h1>
+        <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
           Signed in as {user.name} ({user.role})
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardHeader>
-              <CardTitle className="text-sm text-muted-foreground">{stat.label}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">{stat.value}</CardContent>
-          </Card>
+          <UswPanel key={stat.label} className="p-3">
+            <p className="font-[family-name:var(--font-space-mono)] text-[10px] uppercase text-[var(--usw-on-surface-variant)]">
+              {stat.label}
+            </p>
+            <p className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold text-[var(--usw-primary)]">
+              {stat.value}
+            </p>
+          </UswPanel>
         ))}
       </div>
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-lg font-medium">Recent activity</h2>
+          <h2 className="font-[family-name:var(--font-space-grotesk)] text-lg font-bold uppercase text-[var(--usw-on-surface)]">
+            Recent activity
+          </h2>
           {user.role === "SUPER_ADMIN" && (
-            <Link href="/admin/audit-log" className="text-sm underline">
+            <Link
+              href="/admin/audit-log"
+              className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-secondary-fixed-dim)] underline"
+            >
               View full audit log
             </Link>
           )}
         </div>
         {recentAuditLogs.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No activity yet.</p>
+          <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+            No activity yet.
+          </p>
         ) : (
-          <ul className="space-y-1 text-sm">
+          <ul className="font-[family-name:var(--font-space-mono)] space-y-1 text-sm text-[var(--usw-on-surface-variant)]">
             {recentAuditLogs.map((log) => (
-              <li key={log.id} className="text-muted-foreground">
+              <li key={log.id}>
                 {log.actor?.username ?? "System"} — {log.action.replace(/_/g, " ")} —{" "}
                 {log.createdAt.toLocaleString()}
               </li>
@@ -99,7 +113,10 @@ export default async function AdminHomePage() {
         )}
       </div>
 
-      <Link href="/admin/tournaments" className="inline-block text-sm underline">
+      <Link
+        href="/admin/tournaments"
+        className="font-[family-name:var(--font-space-mono)] inline-block text-sm text-[var(--usw-secondary-fixed-dim)] underline"
+      >
         Manage tournaments →
       </Link>
     </div>

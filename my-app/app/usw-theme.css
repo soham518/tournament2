@@ -1,9 +1,14 @@
-/* Scoped theme for every player-facing page (app/page.tsx and everything
-   under app/(player)/). Deliberately not touching the shadcn tokens in
-   globals.css, which the admin area still uses — this is a distinct
-   "cyber-samurai HUD" aesthetic sourced from a Stitch design, applied only
-   within .usw-theme. */
-.usw-theme {
+/* Theme for every player- and admin-facing page — a distinct "cyber-samurai
+   HUD" aesthetic sourced from a Stitch design. The custom properties live
+   on :root (not scoped to a .usw-theme class) because Base UI's Dialog
+   portals its content directly onto <body>, outside whatever DOM subtree
+   a class-scoped wrapper would cover — CSS custom properties resolve by
+   DOM ancestry, not React tree position, so a class-scoped definition left
+   every dialog unable to see these variables at all. Every page that uses
+   this theme already wraps itself in .usw-theme for the background/text
+   color application below; nothing in the app still needs the shadcn
+   defaults from globals.css to differ at the root level. */
+:root {
   --usw-surface: #11131d;
   --usw-surface-bright: #373844;
   --usw-surface-container-lowest: #0c0e18;
@@ -25,7 +30,9 @@
   --usw-tertiary: #d5c3ff;
   --usw-tertiary-container: #bda2ff;
   --usw-error: #ffb4ab;
+}
 
+.usw-theme {
   background-color: var(--usw-surface);
   color: var(--usw-on-surface);
 }

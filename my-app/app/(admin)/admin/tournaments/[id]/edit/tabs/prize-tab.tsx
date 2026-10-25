@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import { updatePrizePoolAction } from "@/lib/actions/tournament";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { UswButton } from "@/components/usw/button";
+import { UswInput } from "@/components/usw/input";
+import { UswLabel } from "@/components/usw/label";
+import { UswSwitch } from "@/components/usw/switch";
+import { UswSelect } from "@/components/usw/select";
+import { UswFieldError } from "@/components/usw/field-error";
+import { UswFieldSuccess } from "@/components/usw/field-success";
 
 type DistributionRow = {
   position: number;
@@ -88,42 +84,29 @@ export function PrizeTab({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="flex items-center justify-between">
-        <Label htmlFor="prizePoolEnabled">Prize pool enabled</Label>
+        <UswLabel htmlFor="prizePoolEnabled">Prize pool enabled</UswLabel>
         <Controller
           name="prizePoolEnabled"
           control={control}
           render={({ field }) => (
-            <Switch id="prizePoolEnabled" checked={field.value} onCheckedChange={field.onChange} />
+            <UswSwitch id="prizePoolEnabled" checked={field.value} onCheckedChange={field.onChange} />
           )}
         />
       </div>
 
       {prizePoolEnabled && (
-        <div className="space-y-4 rounded-md border p-3">
+        <div className="space-y-4 bg-[var(--usw-surface-container-low)] p-3">
           <div className="space-y-2">
-            <Label htmlFor="prizeFundingType">Funding type</Label>
-            <Controller
-              name="prizeFundingType"
-              control={control}
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger id="prizeFundingType" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="GUARANTEED">Guaranteed amount</SelectItem>
-                    <SelectItem value="REGISTRATION_DEPENDENT">
-                      Based on collected entry fees
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
+            <UswLabel htmlFor="prizeFundingType">Funding type</UswLabel>
+            <UswSelect id="prizeFundingType" {...register("prizeFundingType")}>
+              <option value="GUARANTEED">Guaranteed amount</option>
+              <option value="REGISTRATION_DEPENDENT">Based on collected entry fees</option>
+            </UswSelect>
           </div>
           {prizeFundingType === "GUARANTEED" ? (
             <div className="space-y-2">
-              <Label htmlFor="prizePoolAmountRupees">Total prize pool (INR)</Label>
-              <Input
+              <UswLabel htmlFor="prizePoolAmountRupees">Total prize pool (INR)</UswLabel>
+              <UswInput
                 id="prizePoolAmountRupees"
                 type="number"
                 min={0}
@@ -133,10 +116,10 @@ export function PrizeTab({
             </div>
           ) : (
             <div className="space-y-2">
-              <Label htmlFor="prizeRevenuePercent">
+              <UswLabel htmlFor="prizeRevenuePercent">
                 Percent of verified entry fees allocated to the prize pool
-              </Label>
-              <Input
+              </UswLabel>
+              <UswInput
                 id="prizeRevenuePercent"
                 type="number"
                 min={0}
@@ -147,37 +130,26 @@ export function PrizeTab({
           )}
 
           <div className="space-y-2">
-            <Label>Prize distribution</Label>
+            <UswLabel>Prize distribution</UswLabel>
             {fields.map((field, index) => (
               <div key={field.id} className="grid grid-cols-[1fr_1fr_auto_auto] items-end gap-2">
-                <Input placeholder="Label" {...register(`distributions.${index}.label`)} />
-                <Controller
-                  name={`distributions.${index}.valueType`}
-                  control={control}
-                  render={({ field: f }) => (
-                    <Select value={f.value} onValueChange={f.onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PERCENTAGE">%</SelectItem>
-                        <SelectItem value="FIXED">INR</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <Input
+                <UswInput placeholder="Label" {...register(`distributions.${index}.label`)} />
+                <UswSelect {...register(`distributions.${index}.valueType`)}>
+                  <option value="PERCENTAGE">%</option>
+                  <option value="FIXED">INR</option>
+                </UswSelect>
+                <UswInput
                   type="number"
                   min={0}
                   className="w-24"
                   {...register(`distributions.${index}.valueInput`)}
                 />
-                <Button type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
+                <UswButton type="button" variant="ghost" size="sm" onClick={() => remove(index)}>
                   Remove
-                </Button>
+                </UswButton>
               </div>
             ))}
-            <Button
+            <UswButton
               type="button"
               variant="outline"
               size="sm"
@@ -191,16 +163,16 @@ export function PrizeTab({
               }
             >
               Add position
-            </Button>
+            </UswButton>
           </div>
         </div>
       )}
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
-      {saved && <p className="text-sm text-emerald-600">Saved.</p>}
-      <Button type="submit" disabled={isSubmitting}>
+      <UswFieldError>{serverError}</UswFieldError>
+      <UswFieldSuccess>{saved && "Saved."}</UswFieldSuccess>
+      <UswButton type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Saving…" : "Save"}
-      </Button>
+      </UswButton>
     </form>
   );
 }

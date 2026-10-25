@@ -1,15 +1,15 @@
 import { notFound } from "next/navigation";
 import { requireTournamentAdmin } from "@/lib/auth/guards";
 import { prisma } from "@/lib/prisma";
-import { Badge } from "@/components/ui/badge";
+import { UswBadge } from "@/components/usw/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  UswTable,
+  UswTableBody,
+  UswTableCell,
+  UswTableHead,
+  UswTableHeader,
+  UswTableRow,
+} from "@/components/usw/table";
 import { RegistrationActions } from "./registration-actions";
 
 export default async function AdminRegistrationsPage({
@@ -30,45 +30,51 @@ export default async function AdminRegistrationsPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-4 py-16">
-      <h1 className="text-2xl font-semibold">Registrations</h1>
-      <p className="text-sm text-muted-foreground">{tournament.name}</p>
+    <div className="mx-auto w-full max-w-5xl space-y-4">
+      <h1 className="font-[family-name:var(--font-space-grotesk)] text-2xl font-bold uppercase text-[var(--usw-on-surface)]">
+        Registrations
+      </h1>
+      <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+        {tournament.name}
+      </p>
 
       {registrations.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No registrations yet.</p>
+        <p className="font-[family-name:var(--font-space-mono)] text-sm text-[var(--usw-on-surface-variant)]">
+          No registrations yet.
+        </p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Player</TableHead>
-              <TableHead>In-game name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead>Registered</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        <UswTable>
+          <UswTableHeader>
+            <UswTableRow>
+              <UswTableHead>Player</UswTableHead>
+              <UswTableHead>In-game name</UswTableHead>
+              <UswTableHead>Status</UswTableHead>
+              <UswTableHead>Payment</UswTableHead>
+              <UswTableHead>Registered</UswTableHead>
+              <UswTableHead>Actions</UswTableHead>
+            </UswTableRow>
+          </UswTableHeader>
+          <UswTableBody>
             {registrations.map((registration) => (
-              <TableRow key={registration.id}>
-                <TableCell className="font-medium">{registration.player.username}</TableCell>
-                <TableCell>{registration.player.playerProfile?.sfaInGameName ?? "—"}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{registration.status}</Badge>
-                </TableCell>
-                <TableCell>{registration.paymentStatus}</TableCell>
-                <TableCell>{registration.registeredAt.toLocaleDateString()}</TableCell>
-                <TableCell>
+              <UswTableRow key={registration.id}>
+                <UswTableCell className="font-bold">{registration.player.username}</UswTableCell>
+                <UswTableCell>{registration.player.playerProfile?.sfaInGameName ?? "—"}</UswTableCell>
+                <UswTableCell>
+                  <UswBadge variant="secondary">{registration.status}</UswBadge>
+                </UswTableCell>
+                <UswTableCell>{registration.paymentStatus}</UswTableCell>
+                <UswTableCell>{registration.registeredAt.toLocaleDateString()}</UswTableCell>
+                <UswTableCell>
                   {registration.status === "PENDING" ? (
                     <RegistrationActions registrationId={registration.id} />
                   ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
+                    <span className="text-xs text-[var(--usw-on-surface-variant)]">—</span>
                   )}
-                </TableCell>
-              </TableRow>
+                </UswTableCell>
+              </UswTableRow>
             ))}
-          </TableBody>
-        </Table>
+          </UswTableBody>
+        </UswTable>
       )}
     </div>
   );
