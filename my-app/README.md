@@ -66,9 +66,16 @@ The script:
 - Generates a random password and prints it **once**. It is never passed on the command line
   or hardcoded. Log in immediately and treat that password as sensitive.
 
-Further **Tournament Admin** accounts are currently created by directly updating a user's
-`role` in the database (`User.role = 'TOURNAMENT_ADMIN'`) — there's no admin-management UI yet
-(see [Known limitations](#known-limitations)).
+Further **Tournament Admin** accounts use the same token-gated pattern, via a separate script:
+
+```bash
+npm run create-tournament-admin -- --email=them@example.com --username=them --token=<value of SUPER_ADMIN_SETUP_TOKEN>
+```
+
+Unlike `create-super-admin`, this one can be run repeatedly (there's no limit on Tournament
+Admins) — it only refuses if the email/username is already taken. There's still no in-app UI
+for granting roles to an *existing* account; these scripts are for creating new admin accounts
+only (see [Known limitations](#known-limitations)).
 
 ## Testing
 
@@ -164,8 +171,10 @@ These are explicit scope decisions or known gaps, not silently-faked functionali
   results today (`recordOfficialResultAction`). The `Dispute` model and open/resolve actions
   exist and work, but there's no UI yet for a player to submit a conflicting self-reported
   result that would trigger one automatically.
-- **No admin-management UI.** Granting `TOURNAMENT_ADMIN`/`SUPER_ADMIN` roles beyond the first
-  Super Admin currently requires a direct database update.
+- **No in-app admin-management UI.** New Tournament Admin accounts can be created via
+  `npm run create-tournament-admin` (see above), but there's no UI to promote/demote an
+  *existing* user's role, or to grant additional Super Admins — those still need a direct
+  database update.
 - **No waitlist promotion automation.** Waitlisted registrations are created correctly when a
   tournament fills up, but nothing currently promotes the next waitlisted player when a slot
   frees up (withdrawal, expiry, rejection).
