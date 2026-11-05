@@ -131,6 +131,7 @@ export default async function PublicBracketPage({
                     ? { registrationId: b.registrationId, name: b.registration.player.username }
                     : null,
                   winnerRegistrationId: match.winnerRegistrationId,
+                  advancesToMatchId: match.advancesToMatchId,
                 };
               })}
               currentUserRegistrationId={myRegistration?.id ?? null}

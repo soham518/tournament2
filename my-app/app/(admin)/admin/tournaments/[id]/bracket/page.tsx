@@ -168,6 +168,7 @@ export default async function AdminBracketPage({
                     ? { registrationId: b.registrationId, name: b.registration.player.username }
                     : null,
                   winnerRegistrationId: match.winnerRegistrationId,
+                  advancesToMatchId: match.advancesToMatchId,
                 };
               })}
               renderActions={(match) =>
