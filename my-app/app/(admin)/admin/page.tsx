@@ -7,13 +7,9 @@ import { UswPanel } from "@/components/usw/panel";
 export default async function AdminHomePage() {
   const user = await requireRole(["TOURNAMENT_ADMIN", "SUPER_ADMIN"]);
 
-  const ownershipFilter =
-    user.role === "SUPER_ADMIN"
-      ? {}
-      : { OR: [{ ownerId: user.id }, { adminPermissions: { some: { userId: user.id } } }] };
-
+  // Any admin sees every tournament, not just ones they created — admins
+  // are a shared team, not siloed per-tournament owners.
   const tournaments = await prisma.tournament.findMany({
-    where: ownershipFilter,
     include: { _count: { select: { registrations: { where: { status: "APPROVED" } } } } },
   });
 

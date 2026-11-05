@@ -14,13 +14,11 @@ import {
 import { CreateTournamentDialog } from "./create-dialog";
 
 export default async function AdminTournamentsPage() {
-  const user = await requireRole(["TOURNAMENT_ADMIN", "SUPER_ADMIN"]);
+  await requireRole(["TOURNAMENT_ADMIN", "SUPER_ADMIN"]);
 
+  // Any admin sees every tournament, not just ones they created — admins
+  // are a shared team, not siloed per-tournament owners.
   const tournaments = await prisma.tournament.findMany({
-    where:
-      user.role === "SUPER_ADMIN"
-        ? {}
-        : { OR: [{ ownerId: user.id }, { adminPermissions: { some: { userId: user.id } } }] },
     include: {
       _count: {
         select: { registrations: { where: { status: "APPROVED" } } },

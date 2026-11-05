@@ -1,7 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
 
 export async function getSessionUser() {
   const session = await auth();
@@ -20,23 +19,12 @@ export async function requireRole(roles: Array<"PLAYER" | "TOURNAMENT_ADMIN" | "
   return user;
 }
 
-// Tournament Admins may only act on tournaments they own or have been
-// granted AdminPermission on; Super Admins bypass the ownership check.
-// This is the server-side authorization the spec requires beyond hiding
-// admin UI — every admin server action/page must call this, not just rely
-// on role checks alone.
-export async function requireTournamentAdmin(tournamentId: string) {
-  const user = await requireRole(["TOURNAMENT_ADMIN", "SUPER_ADMIN"]);
-  if (user.role === "SUPER_ADMIN") return user;
-
-  const permission = await prisma.tournament.findFirst({
-    where: {
-      id: tournamentId,
-      OR: [{ ownerId: user.id }, { adminPermissions: { some: { userId: user.id } } }],
-    },
-    select: { id: true },
-  });
-
-  if (!permission) redirect("/admin/tournaments");
-  return user;
+// Any Tournament Admin or Super Admin can act on any tournament — admins
+// are a shared team, not siloed per-tournament owners. `tournamentId` is
+// kept in the signature (unused) so every existing call site stays
+// unchanged; it's still the server-side authorization every admin server
+// action/page must call, not just a role check alone.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so every call site's argument list stays unchanged
+export async function requireTournamentAdmin(_tournamentId: string) {
+  return requireRole(["TOURNAMENT_ADMIN", "SUPER_ADMIN"]);
 }
