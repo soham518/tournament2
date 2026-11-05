@@ -26,7 +26,7 @@ const GAP_V = 24;
 const SLOT_H = CARD_H + GAP_V;
 const COLUMN_W = 220;
 const GAP_H = 56;
-const LINE_COLOR = "var(--usw-outline-variant)";
+const LINE_COLOR = "var(--usw-secondary-fixed-dim)";
 
 function roundLabel(round: number, totalRounds: number, matchesInRound: number) {
   if (matchesInRound === 1) return "Final";
