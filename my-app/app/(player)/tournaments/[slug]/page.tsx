@@ -31,6 +31,7 @@ export default async function TournamentDetailPage({
       paymentConfig: true,
       prizeDistributions: { orderBy: { position: "asc" } },
       allowedFighters: { include: { fighter: true } },
+      winnerRegistration: { include: { player: { select: { username: true } } } },
       _count: { select: { registrations: { where: { status: "APPROVED" } } } },
     },
   });
@@ -73,6 +74,17 @@ export default async function TournamentDetailPage({
           View bracket &amp; standings
         </Link>
       </div>
+
+      {tournament.winnerRegistration && (
+        <UswPanel className="text-center">
+          <p className="font-[family-name:var(--font-space-mono)] text-[11px] uppercase tracking-widest text-[var(--usw-secondary-fixed-dim)]">
+            🏆 Champion
+          </p>
+          <p className="font-[family-name:var(--font-space-grotesk)] text-xl font-bold text-[var(--usw-on-surface)]">
+            {tournament.winnerRegistration.player.username}
+          </p>
+        </UswPanel>
+      )}
 
       <UswPanel className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Info label="Organizer" value={tournament.organizerName} />

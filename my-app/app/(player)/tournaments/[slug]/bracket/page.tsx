@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { getSessionUser } from "@/lib/auth/guards";
 import { computeGroupStandings } from "@/lib/tournaments/standings";
 import { UswPanel } from "@/components/usw/panel";
 import { UswBracketTree, type BracketTreeMatch } from "@/components/usw/bracket-tree";
@@ -30,6 +31,14 @@ export default async function PublicBracketPage({
     },
   });
   if (!tournament || tournament.status === "DRAFT") notFound();
+
+  const user = await getSessionUser();
+  const myRegistration = user
+    ? await prisma.tournamentRegistration.findUnique({
+        where: { tournamentId_playerId: { tournamentId: tournament.id, playerId: user.id } },
+        select: { id: true },
+      })
+    : null;
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-8 py-2">
@@ -124,6 +133,7 @@ export default async function PublicBracketPage({
                   winnerRegistrationId: match.winnerRegistrationId,
                 };
               })}
+              currentUserRegistrationId={myRegistration?.id ?? null}
             />
           )}
         </section>

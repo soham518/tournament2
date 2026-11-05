@@ -240,6 +240,7 @@ enum TournamentStatus {
   DRAFT
   PUBLISHED
   CANCELLED
+  COMPLETED
 }
 
 model Tournament {
@@ -300,6 +301,9 @@ model Tournament {
   publishedAt DateTime?
   cancelledAt DateTime?
   cancellationReason String?
+  completedAt DateTime?
+  winnerRegistrationId String?
+  winnerRegistration   TournamentRegistration? @relation("TournamentWinner", fields: [winnerRegistrationId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -437,6 +441,7 @@ model TournamentRegistration {
   payment    Payment?
   matchParticipations MatchParticipant[]
   groupMemberships      GroupMembership[]
+  wonTournaments          Tournament[] @relation("TournamentWinner")
 
   @@unique([tournamentId, playerId])
   @@index([tournamentId, status])

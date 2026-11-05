@@ -1,8 +1,8 @@
 // Derives the user-facing tournament status from persisted fields + the
-// current time + capacity — never from client input. DRAFT and CANCELLED
-// are the only statuses an admin sets directly; everything else here is
-// computed so an admin editing a description can't accidentally reopen
-// registration, and so the browser can never forge a status.
+// current time + capacity — never from client input. DRAFT, CANCELLED, and
+// COMPLETED are the only statuses an admin sets directly; everything else
+// here is computed so an admin editing a description can't accidentally
+// reopen registration, and so the browser can never forge a status.
 export type DisplayStatus =
   | "DRAFT"
   | "UPCOMING"
@@ -27,7 +27,7 @@ export const DISPLAY_STATUS_LABEL: Record<DisplayStatus, string> = {
 };
 
 type StatusInput = {
-  status: "DRAFT" | "PUBLISHED" | "CANCELLED";
+  status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "COMPLETED";
   registrationOpensAt: Date;
   registrationClosesAt: Date;
   startAt: Date;
@@ -45,6 +45,7 @@ export function computeDisplayStatus(
 ): DisplayStatus {
   if (tournament.status === "DRAFT") return "DRAFT";
   if (tournament.status === "CANCELLED") return "CANCELLED";
+  if (tournament.status === "COMPLETED") return "COMPLETED";
 
   if (now < tournament.registrationOpensAt) return "UPCOMING";
 
@@ -64,9 +65,9 @@ export function computeDisplayStatus(
     return "REGISTRATION_CLOSED";
   }
 
-  // COMPLETED currently derives from endAt only, since the match engine
-  // (section 16) isn't wired up yet. Once matches exist, a tournament
-  // should also be considered COMPLETED once its final match is official.
+  // An admin explicitly completing a tournament (completeTournamentAction)
+  // short-circuits above. This is a fallback for a tournament nobody marked
+  // complete but whose configured end time has already passed.
   if (tournament.endAt && now >= tournament.endAt) return "COMPLETED";
 
   return "IN_PROGRESS";

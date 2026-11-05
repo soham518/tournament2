@@ -72,6 +72,52 @@ export async function recordOfficialResultAction(
       }
     }
 
+    // Third-place match: if this is a semifinal (the round immediately
+    // before the final) and the stage has a 3rd-place match, the loser
+    // feeds into it the same way the winner feeds into the next round —
+    // there's no separate "loser advancement" column, so the two
+    // semifinals' slot is derived deterministically by matchNumber order.
+    if (!match.isThirdPlace) {
+      const thirdPlaceMatch = await tx.match.findFirst({
+        where: { stageId: match.stageId, isThirdPlace: true },
+      });
+      if (thirdPlaceMatch) {
+        const finalMatch = await tx.match.findFirst({
+          where: { stageId: match.stageId, isThirdPlace: false },
+          orderBy: { round: "desc" },
+          select: { round: true },
+        });
+        if (finalMatch && match.round === finalMatch.round - 1) {
+          const semifinalMatches = await tx.match.findMany({
+            where: { stageId: match.stageId, isThirdPlace: false, round: match.round },
+            orderBy: { matchNumber: "asc" },
+            select: { id: true },
+          });
+          const losingParticipant = match.participants.find((p) => p.id !== winningParticipant.id);
+          if (losingParticipant) {
+            const slot: "A" | "B" = semifinalMatches[0]?.id === match.id ? "A" : "B";
+            await tx.matchParticipant.upsert({
+              where: { matchId_slot: { matchId: thirdPlaceMatch.id, slot } },
+              create: { matchId: thirdPlaceMatch.id, slot, registrationId: losingParticipant.registrationId },
+              update: { registrationId: losingParticipant.registrationId },
+            });
+
+            const updatedThirdPlace = await tx.match.findUnique({
+              where: { id: thirdPlaceMatch.id },
+              include: { participants: true },
+            });
+            if (
+              updatedThirdPlace &&
+              updatedThirdPlace.participants.length === 2 &&
+              updatedThirdPlace.status === "PENDING"
+            ) {
+              await tx.match.update({ where: { id: thirdPlaceMatch.id }, data: { status: "SCHEDULED" } });
+            }
+          }
+        }
+      }
+    }
+
     await tx.auditLog.create({
       data: {
         actorId: admin.id,

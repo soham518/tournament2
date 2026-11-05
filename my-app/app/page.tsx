@@ -34,6 +34,7 @@ async function getFeaturedTournament() {
 export default async function Home() {
   const [user, featured] = await Promise.all([getSessionUser(), getFeaturedTournament()]);
   const isLoggedIn = Boolean(user);
+  const isAdmin = user?.role === "TOURNAMENT_ADMIN" || user?.role === "SUPER_ADMIN";
   const tournament = featured?.tournament;
 
   const countdownTarget =
@@ -280,7 +281,7 @@ export default async function Home() {
         </aside>
       )}
 
-      <UswBottomNav isLoggedIn={isLoggedIn} />
+      <UswBottomNav isLoggedIn={isLoggedIn} isAdmin={isAdmin} />
     </div>
   );
 }

@@ -23,6 +23,8 @@ export function TournamentEditor({
   slug,
   status,
   displayStatus,
+  approvedRegistrations,
+  suggestedWinnerRegistrationId,
 }: {
   tournamentId: string;
   basicsDefaults: ComponentProps<typeof BasicsTab>["defaults"];
@@ -34,8 +36,10 @@ export function TournamentEditor({
   fighters: ComponentProps<typeof RulesTab>["fighters"];
   mode: "ONE_V_ONE" | "THREE_V_THREE";
   slug: string;
-  status: "DRAFT" | "PUBLISHED" | "CANCELLED";
+  status: "DRAFT" | "PUBLISHED" | "CANCELLED" | "COMPLETED";
   displayStatus: ComponentProps<typeof PublishTab>["displayStatus"];
+  approvedRegistrations: ComponentProps<typeof PublishTab>["approvedRegistrations"];
+  suggestedWinnerRegistrationId: ComponentProps<typeof PublishTab>["suggestedWinnerRegistrationId"];
 }) {
   return (
     <Tabs defaultValue="basics">
@@ -67,7 +71,14 @@ export function TournamentEditor({
         <StructureTab tournamentId={tournamentId} defaults={structureDefaults} />
       </TabsContent>
       <TabsContent value="publish">
-        <PublishTab tournamentId={tournamentId} slug={slug} status={status} displayStatus={displayStatus} />
+        <PublishTab
+          tournamentId={tournamentId}
+          slug={slug}
+          status={status}
+          displayStatus={displayStatus}
+          approvedRegistrations={approvedRegistrations}
+          suggestedWinnerRegistrationId={suggestedWinnerRegistrationId}
+        />
       </TabsContent>
     </Tabs>
   );

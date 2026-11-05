@@ -2,17 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, ShieldUser } from "lucide-react";
+import { Trophy, User, ShieldUser } from "lucide-react";
 
 // Only two destinations are real pages today (Tournaments, Dashboard/login).
 // The design calls for a 4-icon nav; the other two are kept visually but
 // point at the closest real equivalent rather than a dead link, until
 // dedicated live-match and leaderboard pages exist.
-export function UswBottomNav({ isLoggedIn }: { isLoggedIn: boolean }) {
+//
+// A third "Admin" destination appears only for admins: the header's own
+// Admin/Manage Tournaments links are desktop-only (hidden sm:flex), so this
+// bottom nav is the only way an admin on mobile gets back into /admin from
+// a player-facing page (home, /tournaments, etc).
+export function UswBottomNav({ isLoggedIn, isAdmin }: { isLoggedIn: boolean; isAdmin: boolean }) {
   const pathname = usePathname();
   const items = [
     { href: "/tournaments", label: "Arena", icon: Trophy },
-    { href: isLoggedIn ? "/dashboard" : "/login", label: "Dossier", icon: ShieldUser },
+    { href: isLoggedIn ? "/dashboard" : "/login", label: "Dossier", icon: User },
+    ...(isAdmin ? [{ href: "/admin", label: "Admin", icon: ShieldUser }] : []),
   ];
 
   return (

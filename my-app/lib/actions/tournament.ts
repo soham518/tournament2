@@ -353,3 +353,44 @@ export async function cancelTournamentAction(id: string, reason: string): Promis
   revalidatePath("/tournaments");
   return { success: true };
 }
+
+export async function completeTournamentAction(
+  id: string,
+  winnerRegistrationId: string
+): Promise<TournamentActionResult> {
+  const user = await requireTournamentAdmin(id);
+
+  const tournament = await prisma.tournament.findUniqueOrThrow({ where: { id }, select: { status: true } });
+  if (tournament.status !== "PUBLISHED") {
+    return { success: false, error: "Only a published tournament can be marked complete" };
+  }
+
+  const winner = await prisma.tournamentRegistration.findFirst({
+    where: { id: winnerRegistrationId, tournamentId: id, status: "APPROVED" },
+  });
+  if (!winner) {
+    return { success: false, error: "Select an approved participant as the winner" };
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.tournament.update({
+      where: { id },
+      data: { status: "COMPLETED", completedAt: new Date(), winnerRegistrationId },
+    });
+    await tx.auditLog.create({
+      data: {
+        actorId: user.id,
+        tournamentId: id,
+        action: "TOURNAMENT_COMPLETED",
+        entityType: "Tournament",
+        entityId: id,
+        metadata: { winnerRegistrationId },
+      },
+    });
+  });
+
+  revalidatePath(`/admin/tournaments/${id}/bracket`);
+  revalidatePath(`/admin/tournaments`);
+  revalidatePath(`/tournaments`);
+  return { success: true };
+}

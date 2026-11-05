@@ -29,6 +29,23 @@ export default async function EditTournamentPage({
   const fighters = await prisma.fighter.findMany({ orderBy: { name: "asc" } });
   const displayStatus = computeDisplayStatus(tournament, tournament._count.registrations);
 
+  const approvedRegistrations =
+    tournament.status === "PUBLISHED"
+      ? await prisma.tournamentRegistration.findMany({
+          where: { tournamentId: id, status: "APPROVED" },
+          include: { player: { select: { username: true } } },
+          orderBy: { player: { username: "asc" } },
+        })
+      : [];
+  const finalMatch =
+    tournament.status === "PUBLISHED"
+      ? await prisma.match.findFirst({
+          where: { tournamentId: id, isThirdPlace: false, status: "COMPLETED" },
+          orderBy: { round: "desc" },
+          select: { winnerRegistrationId: true },
+        })
+      : null;
+
   return (
     <div className="mx-auto w-full max-w-3xl">
       <div className="mb-1 flex items-center justify-between">
@@ -59,6 +76,8 @@ export default async function EditTournamentPage({
         slug={tournament.slug}
         status={tournament.status}
         displayStatus={displayStatus}
+        approvedRegistrations={approvedRegistrations.map((r) => ({ id: r.id, name: r.player.username }))}
+        suggestedWinnerRegistrationId={finalMatch?.winnerRegistrationId ?? null}
         fighters={fighters}
         basicsDefaults={{
           name: tournament.name,
