@@ -21,7 +21,9 @@ test("admin can create, configure, and publish a free tournament; a player can r
   await page.getByRole("button", { name: "Create tournament" }).click();
   const createDialog = page.getByRole("dialog", { name: "Create tournament" });
   await createDialog.getByLabel("Name").fill(tournamentName);
-  await createDialog.getByLabel("Start date & time").fill(futureDateTimeLocal(48));
+  const [createStartDate, createStartTime] = futureDateTimeLocal(48).split("T");
+  await createDialog.getByLabel("Start date").fill(createStartDate);
+  await createDialog.getByLabel("Start time").fill(createStartTime);
   await createDialog.getByLabel("Max participants").fill("4");
   await createDialog.getByRole("button", { name: "Create draft" }).click();
 

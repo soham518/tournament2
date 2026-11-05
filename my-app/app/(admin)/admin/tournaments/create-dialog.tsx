@@ -22,7 +22,8 @@ type FormValues = {
   mode: "ONE_V_ONE" | "THREE_V_THREE";
   preset: "SOLO_FIXED" | "SOLO_FLEXIBLE" | "THREE_V_THREE_FIXED" | "THREE_V_THREE_FLEXIBLE";
   structureType: "KNOCKOUT" | "GROUP" | "GROUP_THEN_KNOCKOUT";
-  startAt: string;
+  startDate: string;
+  startTime: string;
   maxParticipants: number;
 };
 
@@ -47,8 +48,10 @@ export function CreateTournamentDialog() {
 
   async function onSubmit(values: FormValues) {
     setServerError(null);
+    const { startDate, startTime, ...rest } = values;
     const result = await createDraftTournamentAction({
-      ...values,
+      ...rest,
+      startAt: `${startDate}T${startTime}`,
       maxParticipants: Number(values.maxParticipants),
     });
     if (!result.success) {
@@ -96,9 +99,15 @@ export function CreateTournamentDialog() {
               <option value="GROUP_THEN_KNOCKOUT">Group stage + knockout playoffs</option>
             </UswSelect>
           </div>
-          <div className="space-y-2">
-            <UswLabel htmlFor="startAt">Start date &amp; time</UswLabel>
-            <UswInput id="startAt" type="datetime-local" {...register("startAt", { required: true })} />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <UswLabel htmlFor="startDate">Start date</UswLabel>
+              <UswInput id="startDate" type="date" {...register("startDate", { required: true })} />
+            </div>
+            <div className="space-y-2">
+              <UswLabel htmlFor="startTime">Start time</UswLabel>
+              <UswInput id="startTime" type="time" {...register("startTime", { required: true })} />
+            </div>
           </div>
           <div className="space-y-2">
             <UswLabel htmlFor="maxParticipants">Max participants</UswLabel>

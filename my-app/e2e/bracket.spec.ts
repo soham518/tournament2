@@ -42,7 +42,9 @@ test("admin can generate a bracket and finalize a result, which advances the win
   await adminPage.getByRole("button", { name: "Create tournament" }).click();
   const createDialog = adminPage.getByRole("dialog", { name: "Create tournament" });
   await createDialog.getByLabel("Name").fill(tournamentName);
-  await createDialog.getByLabel("Start date & time").fill(futureDateTimeLocal(48));
+  const [createStartDate, createStartTime] = futureDateTimeLocal(48).split("T");
+  await createDialog.getByLabel("Start date").fill(createStartDate);
+  await createDialog.getByLabel("Start time").fill(createStartTime);
   await createDialog.getByLabel("Max participants").fill("2");
   await createDialog.getByRole("button", { name: "Create draft" }).click();
   await expect(adminPage).toHaveURL(/\/admin\/tournaments\/.+\/edit/);
