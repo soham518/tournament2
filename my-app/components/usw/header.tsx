@@ -27,12 +27,21 @@ export async function UswHeader() {
             Tournaments
           </Link>
           {isAdmin && (
-            <Link
-              href="/admin"
-              className="font-[family-name:var(--font-space-mono)] hidden h-11 items-center px-3 text-xs font-bold uppercase tracking-wider text-[var(--usw-tertiary)] transition-colors hover:text-[var(--usw-tertiary-container)] sm:flex"
-            >
-              Admin
-            </Link>
+            <>
+              <Link
+                href="/admin"
+                className="font-[family-name:var(--font-space-mono)] hidden h-11 items-center px-3 text-xs font-bold uppercase tracking-wider text-[var(--usw-tertiary)] transition-colors hover:text-[var(--usw-tertiary-container)] sm:flex"
+              >
+                Admin
+              </Link>
+              <Link
+                href="/admin/tournaments"
+                className="font-[family-name:var(--font-space-grotesk)] hidden h-9 items-center px-3 text-[11px] font-bold uppercase tracking-wider text-[var(--usw-on-primary-container)] shadow-[0_0_12px_rgba(245,158,11,0.35)] transition-all hover:brightness-110 sm:flex"
+                style={{ backgroundColor: "var(--usw-primary-container)" }}
+              >
+                Manage Tournaments
+              </Link>
+            </>
           )}
           {user ? (
             <>

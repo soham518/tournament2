@@ -35,7 +35,7 @@ test("admin can generate a bracket and finalize a result, which advances the win
   await adminPage.getByLabel("Email").fill(SUPER_ADMIN_EMAIL);
   await adminPage.getByLabel("Password").fill(SUPER_ADMIN_PASSWORD);
   await adminPage.getByRole("button", { name: "Log in" }).click();
-  await expect(adminPage).toHaveURL(/\/dashboard/);
+  await expect(adminPage).toHaveURL(/\/admin/);
 
   const tournamentName = `E2E Bracket ${Date.now()}`;
   await adminPage.goto("/admin/tournaments");

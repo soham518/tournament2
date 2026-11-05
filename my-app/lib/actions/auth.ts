@@ -72,5 +72,13 @@ export async function loginAction(input: {
     throw error;
   }
 
+  const user = await prisma.user.findUnique({
+    where: { email: input.email },
+    select: { role: true },
+  });
+  if (user?.role === "SUPER_ADMIN" || user?.role === "TOURNAMENT_ADMIN") {
+    redirect("/admin");
+  }
+
   redirect("/dashboard");
 }

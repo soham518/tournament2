@@ -14,7 +14,7 @@ test("admin can create, configure, and publish a free tournament; a player can r
   await page.getByLabel("Email").fill(SUPER_ADMIN_EMAIL);
   await page.getByLabel("Password").fill(SUPER_ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/admin/);
 
   const tournamentName = `E2E Knockout ${Date.now()}`;
   await page.goto("/admin/tournaments");

@@ -8,7 +8,7 @@ test("a super admin can add a fighter and toggle its availability", async ({ pag
   await page.getByLabel("Email").fill(SUPER_ADMIN_EMAIL);
   await page.getByLabel("Password").fill(SUPER_ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Log in" }).click();
-  await expect(page).toHaveURL(/\/dashboard/);
+  await expect(page).toHaveURL(/\/admin/);
 
   await page.goto("/admin/fighters");
   const fighterName = `TestFighter${Date.now()}`;
