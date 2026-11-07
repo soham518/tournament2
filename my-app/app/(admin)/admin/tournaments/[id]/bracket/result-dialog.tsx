@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Check } from "lucide-react";
+import { cn } from "cn";
 import { recordOfficialResultAction } from "@/lib/actions/match";
 import { UswButton } from "@/components/usw/button";
 import { UswInput } from "@/components/usw/input";
 import { UswLabel } from "@/components/usw/label";
-import { UswSelect } from "@/components/usw/select";
+import { UswCheckbox } from "@/components/usw/checkbox";
 import { UswFieldError } from "@/components/usw/field-error";
 import {
   UswDialog,
@@ -27,13 +29,25 @@ export function ResultDialog({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [outcome, setOutcome] = useState<"A_WIN" | "B_WIN" | "FORFEIT_A" | "FORFEIT_B">("A_WIN");
+  const [winner, setWinner] = useState<"A" | "B" | null>(null);
+  const [isForfeit, setIsForfeit] = useState(false);
   const [scoreA, setScoreA] = useState("");
   const [scoreB, setScoreB] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
 
+  function reset() {
+    setWinner(null);
+    setIsForfeit(false);
+    setScoreA("");
+    setScoreB("");
+    setError(null);
+  }
+
   async function handleSubmit() {
+    if (!winner) return;
+    const outcome =
+      winner === "A" ? (isForfeit ? "FORFEIT_A" : "A_WIN") : isForfeit ? "FORFEIT_B" : "B_WIN";
     setIsPending(true);
     const result = await recordOfficialResultAction(matchId, {
       outcome,
@@ -46,11 +60,18 @@ export function ResultDialog({
       return;
     }
     setOpen(false);
+    reset();
     router.refresh();
   }
 
   return (
-    <UswDialog open={open} onOpenChange={setOpen}>
+    <UswDialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) reset();
+      }}
+    >
       <UswDialogTrigger render={<UswButton size="sm">Record result</UswButton>} />
       <UswDialogContent>
         <UswDialogHeader>
@@ -60,18 +81,39 @@ export function ResultDialog({
         </UswDialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            <UswLabel htmlFor="outcome">Outcome</UswLabel>
-            <UswSelect
-              id="outcome"
-              value={outcome}
-              onChange={(e) => setOutcome(e.target.value as typeof outcome)}
-            >
-              <option value="A_WIN">{nameA} wins</option>
-              <option value="B_WIN">{nameB} wins</option>
-              <option value="FORFEIT_A">{nameA} forfeits</option>
-              <option value="FORFEIT_B">{nameB} forfeits</option>
-            </UswSelect>
+            <UswLabel>Winner</UswLabel>
+            <div className="grid grid-cols-2 gap-2">
+              {(
+                [
+                  ["A", nameA],
+                  ["B", nameB],
+                ] as const
+              ).map(([slot, name]) => {
+                const selected = winner === slot;
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => setWinner(slot)}
+                    aria-pressed={selected}
+                    className={cn(
+                      "flex items-center justify-between gap-2 rounded-sm px-3 py-3 text-left text-sm font-bold transition-colors ring-1 ring-inset",
+                      selected
+                        ? "ring-0 [background-color:var(--usw-primary-container)] text-[var(--usw-on-primary-container)]"
+                        : "ring-[var(--usw-outline-variant)] text-[var(--usw-on-surface)] hover:ring-[var(--usw-primary)]"
+                    )}
+                  >
+                    <span className="truncate">{name}</span>
+                    {selected && <Check className="size-4 shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
           </div>
+          <label className="flex items-center gap-2 text-sm text-[var(--usw-on-surface-variant)]">
+            <UswCheckbox checked={isForfeit} onCheckedChange={(checked) => setIsForfeit(checked === true)} />
+            Opponent forfeited
+          </label>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <UswLabel htmlFor="scoreA">{nameA} score (optional)</UswLabel>
@@ -83,7 +125,7 @@ export function ResultDialog({
             </div>
           </div>
           <UswFieldError>{error}</UswFieldError>
-          <UswButton onClick={handleSubmit} disabled={isPending} className="w-full">
+          <UswButton onClick={handleSubmit} disabled={isPending || !winner} className="w-full">
             {isPending ? "Saving…" : "Finalize result"}
           </UswButton>
         </div>
