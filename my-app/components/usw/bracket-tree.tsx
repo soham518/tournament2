@@ -18,14 +18,23 @@ export type BracketTreeMatch = {
 
 const LIVE_STATUSES = new Set(["PENDING", "SCHEDULED", "IN_PROGRESS", "RESULT_SUBMITTED", "UNDER_DISPUTE"]);
 
-// Desktop connector-line layout constants (pixels). Fixed rather than
+// Connector-line layout constants (pixels). Fixed rather than
 // content-driven so match centers can be computed with plain arithmetic
 // server-side — no client JS/measurement needed to draw the SVG lines.
-const CARD_H = 84;
+//
+// CARD_H=140 (measured, not guessed — see git history) is tall enough for
+// two participant rows plus the status badge + action button wrapping to
+// their own line, at both the mobile and desktop column widths below; at
+// narrower widths the badge/button row doesn't fit next to the two name
+// rows on one line, so BracketMatchCard's bottom row wraps instead of
+// clipping via overflow-hidden.
+const CARD_H = 140;
 const GAP_V = 24;
 const SLOT_H = CARD_H + GAP_V;
 const COLUMN_W = 220;
 const GAP_H = 56;
+const MOBILE_COLUMN_W = 150;
+const MOBILE_GAP_H = 32;
 const LINE_COLOR = "var(--usw-secondary-fixed-dim)";
 
 function roundLabel(round: number, totalRounds: number, matchesInRound: number) {
@@ -42,9 +51,10 @@ function involvesPlayer(match: BracketTreeMatch, registrationId: string) {
 // A Server Component on purpose: the admin bracket page passes a raw
 // `renderActions` function (closing over <ResultDialog>), which can only
 // cross a server->client boundary as already-rendered JSX, not as a
-// function prop. So round-switching on mobile is CSS-only scroll-snap
-// (each round is a full-width swipe stop) rather than client-side tab
-// state, keeping this component server-renderable for both callers.
+// function prop. Both the mobile and desktop layouts below are plain
+// horizontally-scrollable, absolutely-positioned columns (no client JS
+// needed to switch rounds or measure anything), keeping this component
+// server-renderable for both callers.
 export function UswBracketTree({
   matches,
   renderActions,
@@ -82,44 +92,29 @@ export function UswBracketTree({
         </a>
       )}
 
-      {/* Mobile: one round per swipeable, full-width page (scroll-snap).
-          Rounds aren't simultaneously visible here, so connector lines
-          between them wouldn't show anything — this stays the simple
-          flex/justify-around layout. */}
-      <div className="flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory sm:hidden">
-        {rounds.map((round, i) => {
-          const roundMatches = matchesByRound[i];
-          return (
-            <div key={round} className="flex w-[82vw] shrink-0 snap-center flex-col gap-4">
-              <h3 className="font-[family-name:var(--font-space-mono)] text-center text-[11px] font-bold uppercase tracking-wider text-[var(--usw-secondary-fixed-dim)]">
-                {roundLabel(round, rounds.length, roundMatches.length)}
-              </h3>
-              <p className="font-[family-name:var(--font-space-mono)] -mt-2 text-center text-[10px] text-[var(--usw-outline)]">
-                {roundMatches.length} match{roundMatches.length === 1 ? "" : "es"}
-              </p>
-              <div className="flex flex-1 flex-col justify-around gap-6">
-                {roundMatches.map((match) => (
-                  <BracketMatchCard
-                    key={match.id}
-                    match={match}
-                    actions={renderActions?.(match)}
-                    currentUserRegistrationId={currentUserRegistrationId}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop: all rounds visible together, so connector lines make
-          sense — absolute-positioned columns + a single SVG overlay,
-          with every position computed from round/matchNumber below. */}
-      <DesktopBracketTree
+      {/* Mobile: same absolute-positioned-columns + SVG-overlay technique as
+          desktop, just narrower columns/gaps, in a horizontally scrollable
+          strip — so connector lines are visible while swiping through
+          rounds instead of only on desktop. */}
+      <BracketColumns
         rounds={rounds}
         matchesByRound={matchesByRound}
         renderActions={renderActions}
         currentUserRegistrationId={currentUserRegistrationId}
+        columnW={MOBILE_COLUMN_W}
+        gapH={MOBILE_GAP_H}
+        wrapperClassName="sm:hidden"
+      />
+
+      {/* Desktop: wider columns, more breathing room between rounds. */}
+      <BracketColumns
+        rounds={rounds}
+        matchesByRound={matchesByRound}
+        renderActions={renderActions}
+        currentUserRegistrationId={currentUserRegistrationId}
+        columnW={COLUMN_W}
+        gapH={GAP_H}
+        wrapperClassName="hidden sm:block"
       />
 
       {thirdPlace && (
@@ -138,22 +133,28 @@ export function UswBracketTree({
   );
 }
 
-function DesktopBracketTree({
+function BracketColumns({
   rounds,
   matchesByRound,
   renderActions,
   currentUserRegistrationId,
+  columnW,
+  gapH,
+  wrapperClassName,
 }: {
   rounds: number[];
   matchesByRound: BracketTreeMatch[][];
   renderActions?: (match: BracketTreeMatch) => React.ReactNode;
   currentUserRegistrationId?: string | null;
+  columnW: number;
+  gapH: number;
+  wrapperClassName: string;
 }) {
   const HEADER_H = 32;
   const round1Count = matchesByRound[0]?.length ?? 0;
   const bodyHeight = Math.max(round1Count * SLOT_H - GAP_V, CARD_H);
   const totalHeight = bodyHeight + HEADER_H;
-  const totalWidth = rounds.length * COLUMN_W + (rounds.length - 1) * GAP_H;
+  const totalWidth = rounds.length * columnW + (rounds.length - 1) * gapH;
 
   // Every match's vertical center is derived from data, not a closed-form
   // formula: round 1 centers come from index * slot height, and every
@@ -175,9 +176,9 @@ function DesktopBracketTree({
 
   const connectors: Array<{ key: string; d: string }> = [];
   for (let r = 0; r < matchesByRound.length - 1; r++) {
-    const columnRightX = r * (COLUMN_W + GAP_H) + COLUMN_W;
-    const midX = columnRightX + GAP_H / 2;
-    const nextLeftX = columnRightX + GAP_H;
+    const columnRightX = r * (columnW + gapH) + columnW;
+    const midX = columnRightX + gapH / 2;
+    const nextLeftX = columnRightX + gapH;
     const byNextMatch = new Map<string, BracketTreeMatch[]>();
     for (const match of matchesByRound[r]) {
       if (!match.advancesToMatchId) continue;
@@ -203,7 +204,7 @@ function DesktopBracketTree({
   }
 
   return (
-    <div className="hidden overflow-x-auto pb-2 sm:block">
+    <div className={cn("overflow-x-auto pb-2", wrapperClassName)}>
       <div className="relative" style={{ width: totalWidth, height: totalHeight }}>
         <svg
           className="pointer-events-none absolute inset-0"
@@ -219,7 +220,7 @@ function DesktopBracketTree({
           <div
             key={round}
             className="absolute top-0"
-            style={{ left: r * (COLUMN_W + GAP_H), width: COLUMN_W }}
+            style={{ left: r * (columnW + gapH), width: columnW }}
           >
             <h3 className="font-[family-name:var(--font-space-mono)] absolute top-0 w-full text-center text-[11px] font-bold uppercase tracking-wider text-[var(--usw-secondary-fixed-dim)]">
               {roundLabel(round, rounds.length, matchesByRound[r].length)}
@@ -230,7 +231,7 @@ function DesktopBracketTree({
                 match={match}
                 actions={renderActions?.(match)}
                 currentUserRegistrationId={currentUserRegistrationId}
-                style={{ position: "absolute", top: centerY.get(match.id)! - CARD_H / 2, height: CARD_H, width: COLUMN_W }}
+                style={{ position: "absolute", top: centerY.get(match.id)! - CARD_H / 2, height: CARD_H, width: columnW }}
               />
             ))}
           </div>
@@ -272,7 +273,7 @@ function BracketMatchCard({
         winnerRegistrationId={match.winnerRegistrationId}
         currentUserRegistrationId={currentUserRegistrationId}
       />
-      <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
         <UswBadge variant="secondary">{match.status}</UswBadge>
         {actions}
       </div>
