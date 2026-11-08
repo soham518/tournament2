@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Swords, Trophy, Users, ArrowRight } from "lucide-react";
+import { Swords, Trophy, Users, ArrowRight, Handshake } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth/guards";
 import { computeDisplayStatus } from "@/lib/tournaments/status";
@@ -8,6 +8,7 @@ import { formatPaiseAsInr } from "@/lib/money";
 import { UswHeader } from "@/components/usw/header";
 import { UswBottomNav } from "@/components/usw/bottom-nav";
 import { Countdown } from "@/components/usw/countdown";
+import { PartnerGrid } from "@/components/usw/partners";
 
 async function getFeaturedTournament() {
   const candidates = await prisma.tournament.findMany({
@@ -255,6 +256,19 @@ export default async function Home() {
             </Link>
           </section>
         )}
+
+        {/* Organizers & sponsors */}
+        <section className="w-full px-4 py-6 sm:px-8">
+          <div className="mx-auto max-w-5xl">
+            <div className="mb-3 flex items-center gap-2">
+              <Handshake className="h-[18px] w-[18px] text-[var(--usw-primary)]" />
+              <h2 className="font-[family-name:var(--font-space-grotesk)] text-lg font-semibold uppercase tracking-wide text-[var(--usw-on-surface)]">
+                Organizers &amp; Sponsors
+              </h2>
+            </div>
+            <PartnerGrid />
+          </div>
+        </section>
       </main>
 
       {/* Sticky mobile CTA */}

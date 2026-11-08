@@ -6,6 +6,7 @@ import { computeDisplayStatus, canAcceptRegistrations, DISPLAY_STATUS_LABEL } fr
 import { formatPaiseAsInr } from "@/lib/money";
 import { UswBadge } from "@/components/usw/badge";
 import { UswPanel } from "@/components/usw/panel";
+import { PartnerGrid } from "@/components/usw/partners";
 import { RegisterButton } from "./register-button";
 import type { RegistrationStatus } from "@/lib/generated/prisma/client";
 
@@ -132,6 +133,11 @@ export default async function TournamentDetailPage({
             </li>
           )}
         </ul>
+      </section>
+
+      <section>
+        <SectionHeading>Organizers &amp; Sponsors</SectionHeading>
+        <PartnerGrid />
       </section>
 
       <section>
