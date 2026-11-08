@@ -7,6 +7,7 @@ import { formatPaiseAsInr } from "@/lib/money";
 import { UswBadge } from "@/components/usw/badge";
 import { UswPanel } from "@/components/usw/panel";
 import { PartnerGrid } from "@/components/usw/partners";
+import { LinkifiedText } from "@/components/usw/linkified-text";
 import { RegisterButton } from "./register-button";
 import type { RegistrationStatus } from "@/lib/generated/prisma/client";
 
@@ -66,7 +67,7 @@ export default async function TournamentDetailPage({
           {tournament.name}
         </h1>
         <p className="font-[family-name:var(--font-space-mono)] mt-2 text-[var(--usw-on-surface-variant)]">
-          {tournament.description}
+          <LinkifiedText text={tournament.description} />
         </p>
         <Link
           href={`/tournaments/${tournament.slug}/bracket`}
@@ -124,9 +125,15 @@ export default async function TournamentDetailPage({
           <li>Legendary fighters: {tournament.legendaryFightersAllowed ? "Allowed" : "Prohibited"}</li>
           {tournament.minAccountLevel && <li>Minimum account level: {tournament.minAccountLevel}</li>}
           {tournament.levelRuleEnabled && tournament.levelRuleDescription && (
-            <li>{tournament.levelRuleDescription}</li>
+            <li>
+              <LinkifiedText text={tournament.levelRuleDescription} />
+            </li>
           )}
-          {tournament.eligibilityNotes && <li>{tournament.eligibilityNotes}</li>}
+          {tournament.eligibilityNotes && (
+            <li>
+              <LinkifiedText text={tournament.eligibilityNotes} />
+            </li>
+          )}
           {tournament.allowedFighters.length > 0 && (
             <li>
               Permitted fighters: {tournament.allowedFighters.map((a) => a.fighter.name).join(", ")}
